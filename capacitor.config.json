@@ -1,0 +1,9 @@
+{
+  "appId": "pk.smaa.taqweem",
+  "appName": "تقویم",
+  "webDir": "www",
+  "backgroundColor": "#0E2523",
+  "android": {
+    "allowMixedContent": false
+  }
+}

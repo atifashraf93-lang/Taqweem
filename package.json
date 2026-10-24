@@ -1,0 +1,14 @@
+{
+  "name": "taqweem-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Taqweem: Qibla, Quran recitation, prayer times, Hijri calendar. Developed by SMAA",
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/local-notifications": "^6.1.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0"
+  }
+}

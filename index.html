@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A1B19">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="تقویم">
+<title>تقویم | Taqweem</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600&amp;family=Amiri:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0E2523;
+  --bg-deep: #0A1B19;
+  --surface: #16352F;
+  --surface-hi: #1B4037;
+  --line: #2A514A;
+  --line-soft: #1E4039;
+  --text: #F4EFE3;
+  --muted: #A9BDB6;
+  --accent: #E2B861;
+  --on-accent: #1A1306;
+  --ok: #7FD1B9;
+  --urdu: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Noto Naskh Arabic', serif;
+  --arabic: 'Amiri', 'Noto Naskh Arabic', 'Traditional Arabic', serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; margin: 0; background: var(--bg); }
+body { color: var(--text); font-family: var(--urdu); font-size: 16px; line-height: 2; overscroll-behavior: none; }
+button { font-family: inherit; color: inherit; cursor: pointer; }
+h1 { margin: 0; font-size: 34px; font-weight: 600; line-height: 1.9; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+#app { position: relative; max-width: 520px; height: 100%; margin: 0 auto; background: var(--bg); display: flex; flex-direction: column; overflow: hidden; }
+#views { flex: 1; min-height: 0; position: relative; }
+.tab { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; padding: max(28px, env(safe-area-inset-top, 0px)) 24px 20px 24px; }
+.tab[hidden] { display: none; }
+
+.brand { display: flex; align-items: center; gap: 8px; min-height: 32px; }
+.brand b { font-size: 15px; font-weight: 600; line-height: 2; }
+.latin { direction: ltr; font-family: var(--arabic); font-size: 13px; letter-spacing: 3px; color: var(--muted); }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sub { font-size: 14px; line-height: 2; color: var(--muted); margin: 0; }
+.chip { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 14px; line-height: 2; }
+.chip svg { flex: none; }
+
+.cards { display: flex; gap: 12px; margin-top: 10px; }
+.card { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 8px 16px; display: flex; flex-direction: column; }
+.card small { font-size: 13px; line-height: 2; color: var(--muted); }
+.card b { font-size: 26px; font-weight: 600; line-height: 1.8; }
+.card b i { font-style: normal; font-size: 14px; font-weight: 400; color: var(--muted); }
+
+.btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; border: none; border-radius: 14px; background: var(--accent); color: var(--on-accent); font-size: 16px; font-weight: 600; line-height: 2; }
+.btn.ghost { background: var(--surface); color: var(--text); border: 1px solid var(--line); }
+.hint { font-size: 13px; line-height: 2.1; color: var(--muted); text-align: center; margin: 8px 0 0 0; }
+.credit { direction: ltr; text-align: center; font-family: var(--arabic); font-size: 15px; letter-spacing: 1px; color: var(--muted); margin: 18px 0 4px 0; line-height: 1.4; }
+
+/* compass */
+.compass-wrap { max-width: 340px; margin: 4px auto 0 auto; }
+#compass { display: block; width: 100%; height: auto; }
+#compass text { font-family: var(--urdu); font-size: 15px; text-anchor: middle; }
+.status { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; color: var(--accent); font-size: 15px; line-height: 2.1; }
+.status.ok { color: var(--ok); }
+
+/* prayer */
+.next-card { margin-top: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.next-card small { font-size: 13px; line-height: 2; color: var(--muted); display: block; }
+.next-card .nm { font-size: 32px; font-weight: 600; line-height: 1.9; color: var(--accent); display: block; }
+.next-card .rem { font-size: 14px; line-height: 2; display: block; }
+.next-card .tm { text-align: center; }
+.next-card .tm b { display: block; font-size: 36px; font-weight: 600; line-height: 1.7; }
+.next-card .tm span { font-size: 13px; color: var(--muted); line-height: 2; }
+.plist { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.prow { display: flex; align-items: center; justify-content: space-between; min-height: 56px; padding: 0 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); }
+.prow.next { background: var(--surface-hi); border-color: var(--accent); }
+.prow.past { opacity: .62; }
+.prow .l { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 600; line-height: 2; }
+.prow .r { font-size: 17px; line-height: 2; }
+.prow.next .r, .prow.next svg { color: var(--accent); }
+.seg { display: flex; gap: 6px; margin-top: 14px; align-items: center; }
+.seg > span { font-size: 14px; color: var(--muted); line-height: 2; margin-inline-end: 4px; }
+.seg button { min-height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid var(--line); background: var(--surface); font-size: 14px; line-height: 2; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 600; }
+
+/* recitation */
+.reciter { margin-top: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.reciter .who { display: flex; align-items: center; gap: 14px; }
+.avatar { width: 56px; height: 56px; flex: none; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; font-family: var(--arabic); font-size: 30px; font-weight: 700; line-height: 1; }
+.reciter .nm { font-size: 18px; font-weight: 600; line-height: 2; display: block; }
+.reciter .ds { font-size: 13px; color: var(--muted); line-height: 2; display: block; }
+.search { margin: 12px 0 4px 0; }
+.search input { width: 100%; min-height: 46px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg-deep); color: var(--text); font-family: var(--urdu); font-size: 16px; padding: 0 16px; }
+.search input::placeholder { color: var(--muted); }
+.srow { display: flex; align-items: center; gap: 14px; width: 100%; padding: 8px 0; min-height: 56px; background: none; border: none; border-bottom: 1px solid var(--line-soft); text-align: start; }
+.srow .num { width: 40px; height: 40px; flex: none; border: 1.5px solid #3C6A61; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 15px; line-height: 1; }
+.srow .mid { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.srow .u { font-size: 18px; font-weight: 600; line-height: 2; }
+.srow .a { font-size: 12px; line-height: 1.9; color: var(--muted); }
+.srow .ar { font-family: var(--arabic); font-size: 24px; line-height: 1.6; color: var(--accent); }
+.srow.playing .num { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.empty { text-align: center; color: var(--muted); padding: 24px 0; font-size: 15px; }
+
+/* calendar */
+.today-chip b { color: var(--accent); font-weight: 600; }
+.mnav { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+.mnav .t { text-align: center; }
+.mnav .t b { display: block; font-size: 20px; font-weight: 600; line-height: 2; }
+.mnav .t span { font-size: 12px; line-height: 1.9; color: var(--muted); }
+.round { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); display: flex; align-items: center; justify-content: center; }
+.wk, .grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.wk { text-align: center; font-size: 11px; line-height: 2.2; color: var(--muted); margin-top: 6px; }
+.wk .fri { color: var(--accent); font-weight: 600; }
+.grid { gap: 3px; }
+.cell { height: 54px; border-radius: 12px; background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.cell.void { background: transparent; }
+.cell .h { font-family: var(--arabic); font-size: 20px; font-weight: 700; line-height: 1.3; }
+.cell .g { direction: ltr; font-size: 11px; line-height: 1.3; color: var(--muted); }
+.cell.fri .h { color: var(--accent); }
+.cell.today { background: var(--accent); color: var(--on-accent); }
+.cell.today .h { color: var(--on-accent); }
+.cell.today .g { color: #3B2E10; }
+h2 { font-size: 16px; font-weight: 600; line-height: 2; margin: 14px 0 4px 0; }
+.occ { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; padding: 4px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); margin-top: 6px; }
+.occ .l { display: flex; align-items: center; gap: 10px; font-size: 16px; line-height: 2; }
+.occ .r { text-align: end; font-size: 12px; line-height: 1.9; color: var(--muted); }
+.occ .r b { display: block; font-size: 13px; font-weight: 400; color: var(--text); }
+.adj { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; padding: 6px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); }
+.adj .lbl { font-size: 14px; line-height: 2; }
+.adj .ctl { display: flex; align-items: center; gap: 8px; }
+.adj .ctl output { min-width: 64px; text-align: center; font-size: 15px; line-height: 2; }
+.adj .round { width: 40px; height: 40px; font-size: 20px; line-height: 1; }
+
+/* mini player + nav */
+#mini { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 6px 16px; background: var(--surface-hi); border-top: 1px solid var(--line); }
+#mini[hidden] { display: none; }
+#mini .open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; background: none; border: none; text-align: start; padding: 0; min-height: 48px; }
+#mini .ar { font-family: var(--arabic); font-size: 24px; color: var(--accent); line-height: 1.5; }
+#mini .u { font-size: 14px; line-height: 2; color: var(--muted); }
+.pbtn { width: 44px; height: 44px; flex: none; border-radius: 50%; border: none; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; }
+#nav { display: flex; flex: none; background: var(--bg-deep); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); }
+#nav button { flex: 1; min-height: 68px; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); font-size: 14px; line-height: 2; }
+#nav button[aria-selected="true"] { color: var(--accent); font-weight: 600; }
+
+/* player overlay */
+#player { position: absolute; inset: 0; z-index: 20; background: var(--bg); display: flex; flex-direction: column; padding: max(16px, env(safe-area-inset-top, 0px)) 24px max(24px, env(safe-area-inset-bottom, 0px)) 24px; overflow-y: auto; }
+#player[hidden] { display: none; }
+.back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; background: none; border: none; color: var(--muted); font-size: 15px; line-height: 2; align-self: flex-start; padding: 0; }
+.pbody { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 6px 0; }
+.pbody .cover { width: min(210px, 52vw); height: auto; }
+.pbody .ttl { font-size: 24px; font-weight: 600; line-height: 2; text-align: center; }
+.pbody .art { font-size: 14px; line-height: 2; color: var(--muted); text-align: center; margin-top: -8px; }
+.pstate { min-height: 28px; font-size: 13px; line-height: 2.1; color: var(--muted); text-align: center; }
+.pstate.err { color: #F2A38F; }
+.seek { align-self: stretch; direction: ltr; }
+.seek input[type=range] { width: 100%; height: 28px; margin: 0; background: transparent; -webkit-appearance: none; appearance: none; }
+.seek input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: linear-gradient(to right, var(--accent) var(--p, 0%), var(--line) var(--p, 0%)); }
+.seek input[type=range]::-moz-range-track { height: 6px; border-radius: 3px; background: var(--line); }
+.seek input[type=range]::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--accent); }
+.seek input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--text); border: none; margin-top: -6px; }
+.seek input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--text); border: none; }
+.times { display: flex; justify-content: space-between; font-size: 13px; line-height: 2; color: var(--muted); direction: ltr; }
+.ctrls { direction: ltr; display: flex; align-items: center; justify-content: center; gap: 26px; }
+.ctrls .sk { width: 52px; height: 52px; border: none; background: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.ctrls .big { width: 72px; height: 72px; border-radius: 50%; border: none; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; }
+.pchips { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.pchips button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid var(--line); background: var(--surface); font-size: 14px; line-height: 2.1; }
+.pchips button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 600; }
+
+/* translation panel */
+#pTrans { align-self: stretch; margin-top: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 6px 14px 10px 14px; }
+#pTrans[hidden] { display: none; }
+.tv { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+.tv .n { flex: none; width: 34px; height: 34px; border: 1.5px solid #3C6A61; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; line-height: 1; margin-top: 8px; }
+.tv p { margin: 0; flex: 1; min-width: 0; font-size: 18px; line-height: 2.5; }
+.tcredit { font-size: 12px; line-height: 2.1; color: var(--muted); text-align: center; padding: 8px 0 0 0; }
+.tcredit button { background: none; border: none; color: var(--accent); font-size: 12px; text-decoration: underline; padding: 0 4px; min-height: 32px; }
+.timport { display: flex; flex-direction: column; gap: 10px; padding: 10px 0 4px 0; font-size: 14px; line-height: 2.2; color: var(--muted); }
+.timport .btn { cursor: pointer; }
+
+/* sheet + toast + splash */
+#sheet { position: absolute; inset: 0; z-index: 30; background: rgba(5, 14, 13, .72); display: flex; align-items: flex-end; }
+#sheet[hidden] { display: none; }
+#sheet .panel { width: 100%; max-height: 82%; overflow-y: auto; background: var(--bg); border-top: 1px solid var(--line); border-radius: 22px 22px 0 0; padding: 18px 24px max(22px, env(safe-area-inset-bottom, 0px)) 24px; }
+#sheet h3 { margin: 0 0 8px 0; font-size: 20px; font-weight: 600; line-height: 2; }
+#sheet .city { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 48px; padding: 0 4px; background: none; border: none; border-bottom: 1px solid var(--line-soft); font-size: 17px; line-height: 2; text-align: start; }
+#sheet .city[aria-current="true"] { color: var(--accent); font-weight: 600; }
+#toast { position: absolute; z-index: 40; left: 50%; bottom: 96px; transform: translateX(-50%); max-width: calc(100% - 48px); background: var(--text); color: #0E2523; padding: 6px 18px; border-radius: 22px; font-size: 14px; line-height: 2.1; text-align: center; box-shadow: 0 6px 24px rgba(0,0,0,.4); }
+#toast[hidden] { display: none; }
+#splash { position: absolute; inset: 0; z-index: 50; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; transition: opacity .5s ease; }
+#splash.gone { opacity: 0; pointer-events: none; }
+#splash h1 { font-size: 54px; line-height: 1.8; }
+#splash .latin { font-size: 22px; letter-spacing: 6px; color: var(--accent); }
+#splash .tag { font-size: 15px; color: var(--muted); line-height: 2.1; margin-top: 8px; }
+#splash .dev { position: absolute; bottom: max(28px, env(safe-area-inset-bottom, 0px)); direction: ltr; font-family: var(--arabic); font-size: 15px; letter-spacing: 1px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { #splash { transition: none; } }
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="views">
+
+<section id="tab-qibla" class="tab" aria-labelledby="h-qibla">
+  <div class="brand">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E2B861" stroke-width="1.8" aria-hidden="true"><rect x="5" y="5" width="14" height="14"/><rect x="5" y="5" width="14" height="14" transform="rotate(45 12 12)"/></svg>
+    <b>تقویم</b><span class="latin">TAQWEEM</span>
+  </div>
+  <div class="head">
+    <div><h1 id="h-qibla">قبلہ</h1><p class="sub">مکہ مکرمہ کی سمت</p></div>
+    <button class="chip" data-act="loc" aria-label="مقام تبدیل کریں">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E2B861" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11.5A7 7 0 005 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+      <span class="locname">کراچی</span>
+    </button>
+  </div>
+  <div class="compass-wrap">
+    <svg id="compass" viewBox="0 0 340 340" role="img" aria-label="قبلہ نما کمپاس">
+      <circle cx="170" cy="170" r="152" fill="#10302B" stroke="#2A514A" stroke-width="1.5"/>
+      <g id="ring">
+        <circle cx="170" cy="170" r="122" fill="none" stroke="#3C6A61" stroke-width="8" stroke-dasharray="1.6 9.17"/>
+        <circle cx="170" cy="170" r="108" fill="none" stroke="#2A514A" stroke-width="1"/>
+        <g id="kaaba">
+          <rect id="kaabaBox" x="157" y="58" width="26" height="28" rx="3" fill="#E2B861"/>
+          <rect x="157" y="65" width="26" height="4" fill="#0E2523"/>
+        </g>
+        <g id="lblN"><text x="170" y="30" fill="#F4EFE3">شمال</text></g>
+        <g id="lblS"><text x="170" y="320" fill="#A9BDB6">جنوب</text></g>
+        <g id="lblE"><text x="316" y="175" fill="#A9BDB6">مشرق</text></g>
+        <g id="lblW"><text x="24" y="175" fill="#A9BDB6">مغرب</text></g>
+      </g>
+      <line x1="170" y1="170" x2="170" y2="106" stroke="#E2B861" stroke-width="3" stroke-linecap="round"/>
+      <polygon points="161,112 179,112 170,92" fill="#E2B861"/>
+      <line x1="170" y1="170" x2="170" y2="196" stroke="#6F8C84" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="170" cy="170" r="8" fill="#F4EFE3"/>
+      <circle cx="170" cy="170" r="3" fill="#0E2523"/>
+    </svg>
+  </div>
+  <div id="qStatus" class="status" role="status" aria-live="polite"></div>
+  <div class="cards">
+    <div class="card"><small>قبلہ کی ڈگری</small><b id="qDeg">—</b></div>
+    <div class="card"><small>مکہ تک فاصلہ</small><b id="qDist">—</b></div>
+  </div>
+  <div style="margin-top:12px"><button class="btn" id="compassBtn" hidden>کمپاس فعال کریں</button></div>
+  <p class="hint" id="qHint"></p>
+  <p class="credit">Developed by SMAA</p>
+</section>
+
+<section id="tab-recite" class="tab" aria-labelledby="h-recite" hidden>
+  <div class="head"><h1 id="h-recite">تلاوت</h1></div>
+  <div class="reciter">
+    <div class="who">
+      <div class="avatar" aria-hidden="true">س</div>
+      <div><span class="nm">شیخ عبدالرحمٰن السدیس</span><span class="ds">امامِ حرمِ مکی</span></div>
+    </div>
+    <button class="btn" id="playFirst">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+      <span id="playFirstTxt">سورۃ الفاتحہ سے چلائیں</span>
+    </button>
+  </div>
+  <div class="search"><input id="surahSearch" type="search" placeholder="سورت تلاش کریں" aria-label="سورت تلاش کریں" autocomplete="off"></div>
+  <div id="surahList"></div>
+</section>
+
+<section id="tab-prayer" class="tab" aria-labelledby="h-prayer" hidden>
+  <div class="head">
+    <div><h1 id="h-prayer">اوقاتِ نماز</h1><p class="sub" id="pDate"></p></div>
+    <button class="chip" data-act="loc" aria-label="مقام تبدیل کریں">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E2B861" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11.5A7 7 0 005 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+      <span class="locname">کراچی</span>
+    </button>
+  </div>
+  <div class="next-card" aria-live="polite">
+    <div><small>اگلی نماز</small><span class="nm" id="nName">—</span><span class="rem" id="nRem"></span></div>
+    <div class="tm"><b id="nTime">—</b><span id="nPer"></span></div>
+  </div>
+  <div class="plist" id="pList"></div>
+  <div class="seg" role="group" aria-label="عصر کا طریقہ">
+    <span>عصر:</span>
+    <button data-asr="2" aria-pressed="true">حنفی</button>
+    <button data-asr="1" aria-pressed="false">شافعی</button>
+  </div>
+  <div class="seg" id="remRow" hidden>
+    <span>نماز کی یاد دہانی:</span>
+    <button id="remBtn" aria-pressed="false">بند</button>
+  </div>
+  <p class="hint" id="pNote">طریقہ: جامعہ علومِ اسلامیہ کراچی (فجر و عشاء ۱۸°)۔ اوقات حساب سے نکلتے ہیں، احتیاطاً مقامی جنتری سے ملا لیں۔</p>
+</section>
+
+<section id="tab-cal" class="tab" aria-labelledby="h-cal" hidden>
+  <div class="head">
+    <h1 id="h-cal">ہجری تقویم</h1>
+    <div class="chip today-chip"><span style="color:var(--muted);font-size:13px">آج</span><b id="todayH"></b></div>
+  </div>
+  <div class="mnav">
+    <button class="round" id="calPrev" aria-label="پچھلا مہینہ"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+    <div class="t"><b id="calTitle"></b><span id="calSub"></span></div>
+    <button class="round" id="calNext" aria-label="اگلا مہینہ"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+  </div>
+  <div class="wk" aria-hidden="true"><span>اتوار</span><span>پیر</span><span>منگل</span><span>بدھ</span><span>جمعرات</span><span class="fri">جمعہ</span><span>ہفتہ</span></div>
+  <div class="grid" id="calGrid"></div>
+  <h2>آنے والے اسلامی ایام</h2>
+  <div id="occList"></div>
+  <div class="adj">
+    <span class="lbl">تاریخ کی درستگی<br><small style="color:var(--muted);font-size:12px">چاند کے اعلان کے مطابق</small></span>
+    <div class="ctl">
+      <button class="round" id="adjMinus" aria-label="ایک دن پیچھے">−</button>
+      <output id="adjVal" aria-live="polite"></output>
+      <button class="round" id="adjPlus" aria-label="ایک دن آگے">+</button>
+    </div>
+  </div>
+  <p class="hint">پاکستان میں مہینہ چاند دیکھنے سے شروع ہوتا ہے، اس لیے ہجری تاریخ ایک دن آگے پیچھے ہو سکتی ہے۔</p>
+</section>
+
+</div>
+
+<div id="mini" hidden>
+  <button class="open" id="miniOpen" aria-label="پلیئر کھولیں">
+    <span class="ar" id="miniAr"></span><span class="u" id="miniU"></span>
+  </button>
+  <button class="pbtn" id="miniPlay" aria-label="چلائیں"></button>
+</div>
+
+<nav id="nav" role="tablist" aria-label="ایپ کے حصے">
+  <button role="tab" data-tab="qibla" aria-selected="true">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>قبلہ
+  </button>
+  <button role="tab" data-tab="recite" aria-selected="false">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0116 0v3"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg>تلاوت
+  </button>
+  <button role="tab" data-tab="prayer" aria-selected="false">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>اوقات
+  </button>
+  <button role="tab" data-tab="cal" aria-selected="false">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg>تقویم
+  </button>
+</nav>
+
+<div id="player" hidden role="dialog" aria-label="تلاوت چل رہی ہے">
+  <button class="back" id="pBack">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>فہرست
+  </button>
+  <div class="pbody">
+    <svg class="cover" viewBox="0 0 220 220" aria-hidden="true">
+      <circle cx="110" cy="110" r="106" fill="#10302B" stroke="#2A514A" stroke-width="1.5"/>
+      <rect x="38" y="38" width="144" height="144" fill="none" stroke="#E2B861" stroke-width="2"/>
+      <rect x="38" y="38" width="144" height="144" fill="none" stroke="#E2B861" stroke-width="2" transform="rotate(45 110 110)"/>
+      <circle cx="110" cy="110" r="52" fill="#0E2523" stroke="#2A514A" stroke-width="1.5"/>
+      <text id="pCover" x="110" y="124" text-anchor="middle" font-family="Amiri, serif" font-size="34" font-weight="700" fill="#F4EFE3"></text>
+    </svg>
+    <div class="ttl" id="pTitle"></div>
+    <div class="art" id="pArt"></div>
+    <div class="pstate" id="pState" role="status" aria-live="polite"></div>
+    <div class="seek">
+      <input type="range" id="pSeek" min="0" max="1000" value="0" aria-label="تلاوت میں مقام">
+      <div class="times"><span id="pCur">0:00</span><span id="pDur">0:00</span></div>
+    </div>
+    <div class="ctrls">
+      <button class="sk" id="pPrev" aria-label="پچھلی سورت"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5.5v13L9.5 12z"/></svg></button>
+      <button class="big" id="pPlay" aria-label="چلائیں"></button>
+      <button class="sk" id="pNext" aria-label="اگلی سورت"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 5h2v14h-2zM4 5.5v13L14.5 12z"/></svg></button>
+    </div>
+    <div class="pchips">
+      <button id="pRepeat" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 013-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 01-3 3H3"/></svg>دہرائیں</button>
+      <button id="pTransBtn" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16M4 10h16M4 15h10M4 20h7"/></svg>ترجمہ</button>
+      <button id="pSleep" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9 2h6"/></svg><span id="pSleepTxt">نیند ٹائمر</span></button>
+    </div>
+    <div id="pTrans" hidden></div>
+  </div>
+</div>
+
+<div id="sheet" hidden>
+  <div class="panel" role="dialog" aria-label="مقام چنیں">
+    <h3>مقام چنیں</h3>
+    <button class="btn" id="useGps" style="margin-bottom:8px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>میرا موجودہ مقام (GPS)
+    </button>
+    <div id="cityList"></div>
+    <button class="btn ghost" id="sheetClose" style="margin-top:14px">بند کریں</button>
+  </div>
+</div>
+
+<div id="toast" hidden role="status"></div>
+
+<div id="splash">
+  <svg width="120" height="120" viewBox="0 0 220 220" aria-hidden="true">
+    <circle cx="110" cy="110" r="106" fill="#10302B" stroke="#2A514A" stroke-width="1.5"/>
+    <rect x="38" y="38" width="144" height="144" fill="none" stroke="#E2B861" stroke-width="3"/>
+    <rect x="38" y="38" width="144" height="144" fill="none" stroke="#E2B861" stroke-width="3" transform="rotate(45 110 110)"/>
+    <circle cx="110" cy="110" r="30" fill="#0E2523" stroke="#2A514A" stroke-width="1.5"/>
+    <circle cx="110" cy="110" r="8" fill="#E2B861"/>
+  </svg>
+  <h1>تقویم</h1>
+  <div class="latin">TAQWEEM</div>
+  <div class="tag">قبلہ · تلاوت · اوقاتِ نماز · ہجری تقویم</div>
+  <div class="dev">Developed by SMAA</div>
+</div>
+
+</div>
+
+<script src="core.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
