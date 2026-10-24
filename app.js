@@ -53,7 +53,8 @@
     $$('#nav button').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === name ? 'true' : 'false'); });
     if (name === 'prayer') renderPrayer();
     if (name === 'cal') renderCal();
-    if (name === 'recite') renderSurahs();
+    if (name === 'recite') { renderSurahs(); renderFavChips(); }
+    if (name === 'more') { paintTas(); paintTrk(); }
   }
   $('#nav').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-tab]');
@@ -255,7 +256,7 @@
     renderedDay = now.toDateString();
     var g = { d: now.getDate(), m: now.getMonth(), y: now.getFullYear() };
     $('#pDate').textContent = Data.WEEKDAYS[now.getDay()] + '، ' + ur(g.d) + ' ' + Data.GREG_MONTHS[g.m] + ' ' + ur(g.y);
-    $$('.seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.asr === state.asr)); });
+    $$('.seg button[data-asr]').forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.asr === state.asr)); });
 
     var times = dayTimes(now);
     var list = $('#pList');
@@ -287,6 +288,7 @@
       $('#nTime').textContent = nc.t;
       $('#nPer').textContent = nc.p;
     }
+    renderSehri();
     tickPrayer();
   }
 
@@ -332,9 +334,9 @@
 
   function scheduleReminders() {
     var LN = nativeLN();
-    if (!LN || !store('rem')) return Promise.resolve();
+    if (!LN || (!store('rem') && !store('fastrem'))) return Promise.resolve();
     var now = new Date(), list = [];
-    for (var d = 0; d < 14; d++) {
+    for (var d = 0; store('rem') && d < 14; d++) {
       var date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d);
       var t = dayTimes(date);
       if (!t) continue;
@@ -344,6 +346,7 @@
         }
       });
     }
+    if (store('fastrem')) list = list.concat(fastReminderList());
     return clearReminders(LN)
       .then(function () { return list.length ? LN.schedule({ notifications: list }) : null; })
       .catch(function () { /* reminders unavailable */ });
@@ -363,7 +366,7 @@
     btn.addEventListener('click', function () {
       if (store('rem')) {
         store('rem', false); paint();
-        clearReminders(LN).catch(function () { /* ignore */ });
+        scheduleReminders();
         toast('یاد دہانی بند کر دی');
         return;
       }
@@ -396,6 +399,7 @@
       $('#occList').innerHTML = '<div class="empty">اس براؤزر میں ہجری کیلنڈر کی سہولت نہیں۔</div>';
       return;
     }
+    renderFastNote();
     $('#todayH').textContent = ur(ht.d) + ' ' + Data.HIJRI_MONTHS[ht.m - 1];
     if (!cal.y) { cal.y = ht.y; cal.m = ht.m; }
 
@@ -489,6 +493,12 @@
   }
   $('#surahSearch').addEventListener('input', renderSurahs);
   $('#surahList').addEventListener('click', function (e) {
+    var f = e.target.closest('[data-fav]');
+    if (f) {
+      var fn = +f.dataset.fav, ix = favs.indexOf(fn);
+      if (ix > -1) favs.splice(ix, 1); else favs.push(fn);
+      store('favs', favs); renderSurahs(); renderFavChips(); return;
+    }
     var b = e.target.closest('.srow');
     if (b) { playSurah(+b.dataset.n); openPlayer(); }
   });
@@ -521,7 +531,7 @@
     $('#mini').hidden = false;
     $('#pPrev').disabled = player.n <= 1; $('#pNext').disabled = player.n >= 114;
     $('#pPrev').style.opacity = player.n <= 1 ? '.35' : '1'; $('#pNext').style.opacity = player.n >= 114 ? '.35' : '1';
-    $('#playFirstTxt').textContent = 'سورۃ ' + s[0] + ' سے چلائیں';
+    $('#playFirstTxt').textContent = 'سورۃ ' + s[0] + ' سے جاری رکھیں';
     if (state.tab === 'recite') renderSurahs();
     if (typeof renderTranslation === 'function' && transOpen) renderTranslation();
     if ('mediaSession' in navigator && window.MediaMetadata) {
@@ -584,6 +594,7 @@
   audio.addEventListener('timeupdate', function () {
     if (player.dragging) return;
     var d = audio.duration, c = audio.currentTime;
+    if (player.n && Math.floor(c) % 5 === 0) store('pos', { n: player.n, t: Math.floor(c) });
     $('#pCur').textContent = fmtTime(c);
     if (isFinite(d) && d > 0) {
       var v = Math.round(c / d * 1000);
@@ -608,7 +619,13 @@
   $('#miniPlay').addEventListener('click', togglePlay);
   $('#pPrev').addEventListener('click', function () { playSurah(player.n - 1); });
   $('#pNext').addEventListener('click', function () { playSurah(player.n + 1); });
-  $('#playFirst').addEventListener('click', function () { playSurah(store('last') || 1); openPlayer(); });
+  $('#playFirst').addEventListener('click', function () {
+    var n = store('last') || 1, pos = store('pos');
+    playSurah(n); openPlayer();
+    if (pos && pos.n === n && pos.t > 10) {
+      audio.addEventListener('loadedmetadata', function () { try { audio.currentTime = pos.t; } catch (e) { /* ignore */ } }, { once: true });
+    }
+  });
 
   var seek = $('#pSeek');
   seek.addEventListener('input', function () {
@@ -759,13 +776,204 @@
     }).catch(function () { /* no bundled file */ });
   });
 
+  /* ---------- sehri / iftar ---------- */
+  function renderSehri() {
+    var el = $('#sehri'), now = new Date(), t = dayTimes(now);
+    if (!t) { el.innerHTML = ''; return; }
+    function rem(at) { return at > now ? remainText(at - now) : 'گزر چکا'; }
+    var f = clock(t.fajr), m = clock(t.maghrib);
+    el.innerHTML = '<div><small>سحری ختم</small><b>' + f.t + ' ' + f.p + '</b><i>' + rem(t.fajr) + '</i></div>' +
+      '<div><small>افطار</small><b>' + m.t + ' ' + m.p + '</b><i>' + rem(t.maghrib) + '</i></div>';
+  }
+  setInterval(function () { if (state.tab === 'prayer') renderSehri(); }, 1000);
+
+  /* ---------- fasting note on calendar ---------- */
+  function fastFor(dayNum) {
+    var g = Core.gregFromDayNum(dayNum), h = Core.hijriFromDayNum(dayNum, state.hoff);
+    return h ? Core.fastingInfo(h, g.wd) : null;
+  }
+  function renderFastNote() {
+    var tn = todayNum(), a = fastFor(tn), b = fastFor(tn + 1), parts = [];
+    if (a) parts.push('آج: ' + a.text);
+    if (b) parts.push('کل: ' + b.text);
+    var el = $('#fastNote');
+    el.hidden = !parts.length;
+    el.innerHTML = parts.join('<br>');
+  }
+
+  /* ---------- fasting reminders (native app) ---------- */
+  function fastReminderList() {
+    var list = [], now = new Date(), tn = todayNum();
+    for (var d = 0; d < 14; d++) {
+      var f = fastFor(tn + d + 1);
+      if (!f || f.kind === 'forbidden' || f.kind === 'ramadan') continue;
+      var at = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d, 21, 0, 0);
+      if (at > now) list.push({ id: 1000 + d, title: 'کل روزہ', body: f.text, schedule: { at: at, allowWhileIdle: true } });
+    }
+    return list;
+  }
+
+  /* ---------- nearest mosques (OpenStreetMap Overpass) ---------- */
+  var OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+  function overpassQuery(lat, lng, r) {
+    var a = '(around:' + r + ',' + lat + ',' + lng + ')';
+    return '[out:json][timeout:25];(node["amenity"="place_of_worship"]["religion"="muslim"]' + a +
+      ';way["amenity"="place_of_worship"]["religion"="muslim"]' + a + ';);out center 80;';
+  }
+  function fetchMosques(lat, lng, r, i) {
+    i = i || 0;
+    return fetch(OVERPASS[i], { method: 'POST', body: 'data=' + encodeURIComponent(overpassQuery(lat, lng, r)),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
+      .then(function (res) { if (!res.ok) throw new Error('http'); return res.json(); })
+      .catch(function (err) { if (i + 1 < OVERPASS.length) return fetchMosques(lat, lng, r, i + 1); throw err; });
+  }
+  function distText(km) { return km < 1 ? ur(Math.round(km * 1000)) + ' میٹر' : ur(km.toFixed(1)) + ' کلومیٹر'; }
+  function findMosques() {
+    var box = $('#mosqList'), btn = $('#mosqBtn'), lat = state.loc.lat, lng = state.loc.lng;
+    if (!window.fetch) { box.innerHTML = '<div class="empty">اس ڈیوائس پر یہ سہولت دستیاب نہیں۔</div>'; return; }
+    btn.disabled = true; box.innerHTML = '<div class="empty">تلاش ہو رہی ہے…</div>';
+    fetchMosques(lat, lng, 3000).then(function (j) {
+      var r = Core.parseMosques(j, lat, lng);
+      if (r.length >= 3) return r;
+      return fetchMosques(lat, lng, 10000).then(function (j2) { return Core.parseMosques(j2, lat, lng); });
+    }).then(function (r) {
+      btn.disabled = false;
+      if (!r.length) { box.innerHTML = '<div class="empty">اس علاقے میں کوئی مسجد نہیں ملی۔</div>'; return; }
+      var note = state.loc.src === 'gps' ? '' : '<p class="hint">آپ کا مقام شہر کے مرکز کے طور پر لیا گیا ہے۔ بہتر نتیجے کے لیے GPS سے مقام لیں۔</p>';
+      box.innerHTML = note + r.slice(0, 15).map(function (m) {
+        var nm = m.name || 'مسجد (نام درج نہیں)';
+        var url = 'https://www.google.com/maps/dir/?api=1&destination=' + m.lat + ',' + m.lng + '&travelmode=walking';
+        return '<div class="row2"><span class="m"><span>' + escapeHtml(nm) + '</span><small>' + distText(m.dist) + ' · ' + Core.dirName(m.bearing) + ' کی طرف' +
+          (m.street ? ' · ' + escapeHtml(m.street) : '') + '</small></span><a href="' + url + '" target="_blank" rel="noopener">راستہ</a></div>';
+      }).join('');
+    }).catch(function () {
+      btn.disabled = false;
+      box.innerHTML = '<div class="empty">تلاش نہیں ہو سکی۔ انٹرنیٹ چیک کر کے دوبارہ کوشش کریں۔</div>';
+    });
+  }
+  $('#mosqBtn').addEventListener('click', findMosques);
+
+  /* ---------- tasbeeh ---------- */
+  var PHRASES = ['سبحان اللہ', 'الحمد للہ', 'اللہ اکبر', 'استغفراللہ', 'درود شریف'];
+  var tas = store('tas') || { p: 0, c: 0, t: 33 };
+  function paintTas() {
+    $('#tasCnt').textContent = ur(tas.c);
+    $('#tasTap').textContent = PHRASES[tas.p];
+    $('#tasPhrase').innerHTML = PHRASES.map(function (p, i) { return '<button data-p="' + i + '" aria-pressed="' + (i === tas.p) + '">' + p + '</button>'; }).join('');
+    $$('[data-t]', $('#tab-more')).forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.t === tas.t)); });
+  }
+  $('#tasTap').addEventListener('click', function () {
+    tas.c++;
+    if (navigator.vibrate) { try { navigator.vibrate(tas.c % tas.t === 0 ? [80, 60, 80] : 12); } catch (e) { /* ignore */ } }
+    if (tas.c % tas.t === 0) toast(ur(tas.c) + ' مکمل ہوئے');
+    store('tas', tas); paintTas();
+  });
+  $('#tasReset').addEventListener('click', function () { tas.c = 0; store('tas', tas); paintTas(); });
+  $('#tasPhrase').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-p]'); if (!b) return;
+    tas.p = +b.dataset.p; tas.c = 0; store('tas', tas); paintTas();
+  });
+  $('#tab-more').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-t]'); if (!b) return;
+    tas.t = +b.dataset.t; store('tas', tas); paintTas();
+  });
+
+  /* ---------- prayer tracker + qaza ---------- */
+  var trk = store('trk') || {};
+  var qaza = typeof store('qaza') === 'number' ? store('qaza') : 0;
+  var TRK_NAMES = ['فجر', 'ظہر', 'عصر', 'مغرب', 'عشاء'];
+  function todayKey() { var n = new Date(); return Core.dateKey(n.getFullYear(), n.getMonth() + 1, n.getDate()); }
+  function paintTrk() {
+    var mask = trk[todayKey()] || 0;
+    $('#trkBtns').innerHTML = TRK_NAMES.map(function (n, i) {
+      return '<button data-i="' + i + '" aria-pressed="' + !!(mask & (1 << i)) + '">' + n + '</button>';
+    }).join('');
+    var n = new Date();
+    $('#trkStreak').textContent = ur(Core.computeStreak(trk, n.getFullYear(), n.getMonth() + 1, n.getDate()));
+    $('#qazaVal').textContent = ur(qaza);
+  }
+  $('#trkBtns').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-i]'); if (!b) return;
+    var k = todayKey();
+    trk[k] = (trk[k] || 0) ^ (1 << +b.dataset.i);
+    var keys = Object.keys(trk).sort();
+    while (keys.length > 120) delete trk[keys.shift()];
+    store('trk', trk); paintTrk();
+  });
+  $('#qazaPlus').addEventListener('click', function () { qaza++; store('qaza', qaza); paintTrk(); });
+  $('#qazaMinus').addEventListener('click', function () { qaza = Math.max(0, qaza - 1); store('qaza', qaza); paintTrk(); });
+
+  /* ---------- zakat ---------- */
+  var ZF = ['zCash', 'zGold', 'zSilver', 'zGoods', 'zDebt', 'zGP', 'zSP'];
+  var zs = store('zakat') || {};
+  function num(id) { var v = parseFloat(latinDigits($('#' + id).value).replace(/,/g, '')); return isFinite(v) && v > 0 ? v : 0; }
+  function money(x) { return ur(Math.round(x).toLocaleString('en-US')); }
+  function calcZakat() {
+    ZF.forEach(function (id) { zs[id] = $('#' + id).value; });
+    store('zakat', zs);
+    var gp = num('zGP'), sp = num('zSP');
+    if (!sp) { $('#zRes').textContent = 'نصاب معلوم کرنے کے لیے آج چاندی کا ریٹ فی گرام لکھیں۔'; return; }
+    var total = num('zCash') + num('zGoods') + num('zGold') * gp + num('zSilver') * sp - num('zDebt');
+    var nisab = 612.36 * sp;
+    $('#zRes').innerHTML = 'کل قابلِ زکوٰۃ مال: <b>' + money(Math.max(0, total)) + '</b> روپے<br>نصاب (چاندی): ' + money(nisab) + ' روپے<br>' +
+      (total >= nisab ? 'زکوٰۃ (۲.۵٪): <b>' + money(total * 0.025) + '</b> روپے' : 'مال نصاب سے کم ہے، زکوٰۃ فرض نہیں ہوتی۔');
+  }
+  ZF.forEach(function (id) { $('#' + id).value = zs[id] || ''; $('#' + id).addEventListener('input', calcZakat); });
+  calcZakat();
+
+  /* ---------- settings: theme, size, fasting reminders ---------- */
+  function applyLook() {
+    var th = store('theme') === 'light' ? 'light' : 'dark', zm = +store('zoom') || 0;
+    document.documentElement.setAttribute('data-theme', th);
+    document.documentElement.setAttribute('data-zoom', String(zm));
+    var mt = document.querySelector('meta[name="theme-color"]'); if (mt) mt.content = th === 'light' ? '#EDE6D3' : '#0A1B19';
+    $$('[data-theme]', $('#tab-more')).forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.theme === th)); });
+    $$('[data-zoom]', $('#tab-more')).forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.zoom === zm)); });
+  }
+  $('#tab-more').addEventListener('click', function (e) {
+    var t = e.target.closest('button[data-theme]'), z = e.target.closest('button[data-zoom]');
+    if (t) { store('theme', t.dataset.theme); applyLook(); }
+    if (z) { store('zoom', +z.dataset.zoom); applyLook(); }
+  });
+  function setupFastReminders() {
+    var LN = nativeLN();
+    if (!LN) return;
+    $('#fastRemRow').hidden = false;
+    var btn = $('#fastRemBtn');
+    function paint() { var on = !!store('fastrem'); btn.setAttribute('aria-pressed', String(on)); btn.textContent = on ? 'چالو' : 'بند'; }
+    paint();
+    btn.addEventListener('click', function () {
+      if (store('fastrem')) { store('fastrem', false); paint(); scheduleReminders(); toast('روزے کی یاد دہانی بند'); return; }
+      LN.requestPermissions().then(function (r) {
+        if (r && r.display === 'granted') { store('fastrem', true); paint(); scheduleReminders(); toast('روزے سے ایک رات پہلے یاد دہانی آئے گی'); }
+        else toast('نوٹیفکیشن کی اجازت نہیں ملی');
+      }).catch(function () { toast('یاد دہانی چالو نہیں ہو سکی'); });
+    });
+  }
+
+  /* ---------- favourites + continue listening ---------- */
+  var favs = store('favs') || [];
+  function renderFavChips() {
+    var el = $('#favChips');
+    el.hidden = !favs.length;
+    el.innerHTML = favs.slice().sort(function (a, b) { return a - b; }).map(function (n) {
+      return '<button data-n="' + n + '">' + SURAHS[n - 1][0] + '</button>';
+    }).join('');
+  }
+  $('#favChips').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-n]'); if (b) { playSurah(+b.dataset.n); openPlayer(); }
+  });
+
   /* ---------- start ---------- */
   var last = store('last');
-  if (last && last >= 1 && last <= 114) $('#playFirstTxt').textContent = 'سورۃ ' + SURAHS[last - 1][0] + ' سے چلائیں';
+  if (last && last >= 1 && last <= 114) $('#playFirstTxt').textContent = 'سورۃ ' + SURAHS[last - 1][0] + ' سے جاری رکھیں';
   $$('.locname').forEach(function (el) { el.textContent = state.loc.name; });
   renderQibla();
   initCompass();
   setupReminders();
+  setupFastReminders();
+  applyLook();
+  renderFavChips();
   updatePlayUI();
   showTab('qibla');
   if (state.loc.src === 'default') locate(true);
