@@ -39,16 +39,19 @@ window.NAATS = [
   { id: 'salat', t: 'الصلاۃ والسلام علیک', poet: 'مشہور سلام', kind: 'سلام (عربی)', audio: null, v: [
     ['الصَّلَاةُ وَالسَّلَامُ عَلَيْكَ يَا رَسُولَ اللَّهِ', 'الصَّلَاةُ وَالسَّلَامُ عَلَيْكَ يَا حَبِيبَ اللَّهِ']
   ], m: ['اے اللہ کے رسول ﷺ! آپ پر درود و سلام ہو، اے اللہ کے حبیب ﷺ! آپ پر درود و سلام ہو۔'] },
-  { id: 'habib', t: 'اے حبیبِ خدا', poet: '', kind: 'نعت', audio: 'naat/habib.mp3', v: [] },
-  { id: 'aankh', t: 'آنکھ اٹھے تیرے لیے', poet: '', kind: 'نعت', audio: 'naat/aankh.mp3', v: [] },
-  { id: 'azan', t: 'آتی ہے ہر اذاں سے', poet: '', kind: 'نعت', audio: 'naat/azan.mp3', v: [] },
-  { id: 'makkah', t: 'مکہ میں ہے دل', poet: 'مظفر وارثی', kind: 'نعت', audio: 'naat/makkah.mp3', v: [] },
-  { id: 'haq', t: 'حق موجود محمد ﷺ', poet: 'مظفر وارثی', kind: 'نعت', audio: 'naat/haq.mp3', v: [] },
-  { id: 'hayya', t: 'حیّ علیٰ خیر العمل', poet: 'مظفر وارثی', kind: 'نعت', audio: 'naat/hayya.mp3', v: [] },
-  { id: 'ilm', t: 'علمِ محمد ﷺ عدلِ محمد ﷺ', poet: 'مظفر وارثی', kind: 'نعت', audio: 'naat/ilm.mp3', v: [] },
-  { id: 'chale', t: 'چلے نہ ایمان ایک قدم', poet: 'مظفر وارثی', kind: 'نعت', audio: 'naat/chale.mp3', v: [] },
-  { id: 'jehal', t: 'Jehal Ka Sar Dare Iblak', poet: 'مظفر وارثی', kind: 'نعت', audio: 'naat/jehal.mp3', v: [] },
-  { id: 'hamd1', t: 'اے خدا ذات کا اپنی', poet: 'مظفر وارثی', kind: 'حمد', audio: 'naat/hamd1.mp3', v: [] },
-  { id: 'hamd2', t: 'اے ہمارے خدا تو ہے', poet: 'مظفر وارثی', kind: 'حمد', audio: 'naat/hamd2.mp3', v: [] },
-  { id: 'hamd3', t: 'اے خدا اے خدا', poet: 'مظفر وارثی', kind: 'حمد', audio: 'naat/hamd3.mp3', v: [] }
+  { id: 'habib', t: 'اے حبیبِ خدا', poet: '', kind: 'نعت', audio: 'naat/habib.ogg', v: [] },
+  { id: 'aankh', t: 'آنکھ اٹھے تیرے لیے', poet: '', kind: 'نعت', audio: 'naat/aankh.ogg', v: [] },
+  { id: 'azan', t: 'آتی ہے ہر اذاں سے', poet: '', kind: 'نعت', audio: 'naat/azan.ogg', v: [] },
+  { id: 'makkah', t: 'مکہ میں ہے دل', poet: 'مظفر وارثی', kind: 'نعت', audio: 'naat/makkah.ogg', v: [] },
+  { id: 'haq', t: 'حق موجود محمد ﷺ', poet: 'مظفر وارثی', kind: 'نعت', audio: 'naat/haq.ogg', v: [] },
+  { id: 'hayya', t: 'حیّ علیٰ خیر العمل', poet: 'مظفر وارثی', kind: 'نعت', audio: 'naat/hayya.ogg', v: [] },
+  { id: 'ilm', t: 'علمِ محمد ﷺ عدلِ محمد ﷺ', poet: 'مظفر وارثی', kind: 'نعت', audio: 'naat/ilm.ogg', v: [] },
+  { id: 'chale', t: 'چلے نہ ایمان ایک قدم', poet: 'مظفر وارثی', kind: 'نعت', audio: 'naat/chale.ogg', v: [] },
+  { id: 'jehal', t: 'Jehal Ka Sar Dare Iblak', poet: 'مظفر وارثی', kind: 'نعت', audio: 'naat/jehal.ogg', v: [] },
+  { id: 'huzoor', t: 'حضور ایسا کوئی انتظام ہو جائے', poet: 'قاری وحید ظفر قاسمی', kind: 'نعت', audio: 'naat/huzoor.ogg', v: [] },
+  { id: 'faslon', t: 'فاصلوں کو تکلف ہے ہم سے اگر', poet: 'قاری وحید ظفر قاسمی', kind: 'نعت', audio: 'naat/faslon.ogg', v: [] },
+  { id: 'zahe', t: 'زہے مقدر حضور حق سے', poet: 'قاری وحید ظفر قاسمی', kind: 'نعت', audio: 'naat/zahe.ogg', v: [] },
+  { id: 'hamd1', t: 'اے خدا ذات کا اپنی', poet: 'مظفر وارثی', kind: 'حمد', audio: 'naat/hamd1.ogg', v: [] },
+  { id: 'hamd2', t: 'اے ہمارے خدا تو ہے', poet: 'مظفر وارثی', kind: 'حمد', audio: 'naat/hamd2.ogg', v: [] },
+  { id: 'hamd3', t: 'اے خدا اے خدا', poet: 'مظفر وارثی', kind: 'حمد', audio: 'naat/hamd3.ogg', v: [] }
 ];
