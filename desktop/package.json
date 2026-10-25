@@ -5,14 +5,47 @@
   "description": "Taqweem: Qibla, Quran recitation, prayer times, Hijri calendar. Developed by SMAA",
   "author": "SMAA",
   "main": "main.js",
-  "devDependencies": { "electron": "31.7.7", "electron-builder": "24.13.3" },
+  "devDependencies": {
+    "electron": "31.7.7",
+    "electron-builder": "24.13.3"
+  },
   "build": {
     "appId": "pk.smaa.taqweem",
     "productName": "Taqweem",
-    "directories": { "output": "dist" },
-    "files": ["main.js", "app/**/*"],
-    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }, { "target": "portable", "arch": ["x64"] }], "icon": "icon.png" },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "perMachine": false, "createDesktopShortcut": true, "shortcutName": "Taqweem" },
-    "artifactName": "Taqweem-${version}-${env.RUN}.${ext}"
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "app/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "shortcutName": "Taqweem",
+      "artifactName": "Taqweem-Setup.${ext}"
+    },
+    "portable": {
+      "artifactName": "Taqweem-Portable.${ext}"
+    }
   }
 }
