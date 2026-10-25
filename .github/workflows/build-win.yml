@@ -1,0 +1,44 @@
+name: Build Windows
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Prepare app files
+        run: |
+          mkdir -p desktop/app
+          cp index.html core.js data.js hadith.js naat.js app.js manifest.webmanifest icon.svg icon-192.png icon-512.png azan.mp3 desktop/app/
+          cp -r audio desktop/app/audio
+          if [ -d naat ]; then cp -r naat desktop/app/naat; fi
+          if [ -f translation-ur.txt ]; then cp translation-ur.txt desktop/app/; fi
+          cp icon-512.png desktop/icon.png
+      - name: Build installer
+        working-directory: desktop
+        env:
+          RUN: ${{ github.run_number }}
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: |
+          npm install
+          npx electron-builder --win --publish never
+          ls -l dist
+      - name: Publish Windows build
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: win-${{ github.run_number }}
+          name: Taqweem Windows ${{ github.run_number }}
+          files: |
+            desktop/dist/*.exe
