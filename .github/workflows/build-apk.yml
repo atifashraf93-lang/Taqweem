@@ -38,6 +38,13 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      - name: Fixed signing key and version number (so new APKs update the old app)
+        run: |
+          mkdir -p ~/.android
+          cp smaa.keystore ~/.android/debug.keystore
+          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"2.${{ github.run_number }}\"/" android/app/build.gradle
+          grep -n "versionCode\|versionName" android/app/build.gradle
+
       - name: Permissions (location, notifications, vibration)
         run: |
           sed -i 's#</manifest>#    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n</manifest>#' android/app/src/main/AndroidManifest.xml
