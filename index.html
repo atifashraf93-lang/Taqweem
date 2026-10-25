@@ -145,7 +145,7 @@ h2 { font-size: 16px; font-weight: 600; line-height: 2; margin: 14px 0 4px 0; }
 #mini .u { font-size: 14px; line-height: 2; color: var(--muted); }
 .pbtn { width: 44px; height: 44px; flex: none; border-radius: 50%; border: none; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; }
 #nav { display: flex; flex: none; background: var(--bg-deep); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); }
-#nav button { flex: 1; min-height: 68px; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); font-size: 14px; line-height: 2; }
+#nav button { flex: 1; min-width: 0; min-height: 68px; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); font-size: 14px; line-height: 2; }
 #nav button[aria-selected="true"] { color: var(--accent); font-weight: 600; }
 
 /* player overlay */
@@ -224,6 +224,32 @@ html[data-theme="light"] #toast { background: #1B2B28; color: #F6F1E4; }
 html[data-zoom="1"] #app { zoom: 1.1; }
 html[data-zoom="2"] #app { zoom: 1.22; }
 
+
+.hh { background:linear-gradient(135deg,#16352F,#1B4037); border:1px solid var(--line); border-radius:22px; padding:10px 18px 14px; margin-top:6px; }
+.hh small { display:block; color:var(--muted); font-size:13px; line-height:2; }
+.hh b { display:block; font-size:26px; font-weight:600; line-height:1.9; color:var(--accent); }
+.hh .g { font-size:14px; color:var(--text); line-height:2; }
+.hnext { display:flex; align-items:center; justify-content:space-between; margin-top:12px; background:var(--accent); color:var(--on-accent); border-radius:20px; padding:10px 18px; border:none; width:100%; text-align:start; }
+.hnext small { display:block; font-size:13px; line-height:2; opacity:.8; }
+.hnext .nm { font-size:28px; font-weight:600; line-height:1.8; display:block; }
+.hnext .rm { font-size:14px; line-height:2; display:block; }
+.hnext .tm { text-align:center; font-size:34px; font-weight:600; line-height:1.6; }
+.hnext .tm span { display:block; font-size:12px; opacity:.8; line-height:1.8; }
+.htiles { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+.htile { background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:10px 14px; text-align:start; display:flex; flex-direction:column; gap:2px; min-height:96px; justify-content:space-between; }
+.htile svg { color:var(--accent); }
+.htile b { font-size:17px; font-weight:600; line-height:1.9; }
+.htile b, .htile small { display: block; }
+.htile small { font-size:12px; color:var(--muted); line-height:1.8; }
+.hquick { display:flex; gap:10px; margin-top:12px; }
+.hquick button { flex:1; min-height:56px; border-radius:16px; border:1px solid var(--line); background:var(--surface-hi); font-size:14px; line-height:1.7; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.hmini { display:flex; gap:10px; margin-top:12px; }
+.hmini div { flex:1; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:4px 12px; text-align:center; }
+.hmini small { display:block; font-size:12px; color:var(--muted); line-height:2; }
+.hmini b { font-size:17px; font-weight:600; line-height:1.8; }
+.hocc { margin-top:12px; background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:6px 16px; font-size:14px; line-height:2.1; }
+.hocc b { color:var(--accent); font-weight:600; }
+
 /* sheet + toast + splash */
 #sheet { position: absolute; inset: 0; z-index: 30; background: rgba(5, 14, 13, .72); display: flex; align-items: flex-end; }
 #sheet[hidden] { display: none; }
@@ -247,7 +273,22 @@ html[data-zoom="2"] #app { zoom: 1.22; }
 
 <div id="views">
 
-<section id="tab-qibla" class="tab" aria-labelledby="h-qibla">
+<section id="tab-home" class="tab" aria-labelledby="h-home">
+  <div class="hh"><small id="hGreet">السلام علیکم</small><b id="h-home">—</b><span class="g" id="hGreg"></span></div>
+  <button class="hnext" data-go="prayer"><span><small>اگلی نماز</small><span class="nm" id="hnName">—</span><span class="rm" id="hnRem"></span></span><span class="tm"><b id="hnTime" style="font-weight:600">—</b><span id="hnPer"></span></span></button>
+  <div class="hmini" id="hMini"></div>
+  <div class="fastnote" id="hFast" hidden></div>
+  <div class="htiles">
+    <button class="htile" data-go="qibla"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg><span><b>قبلہ</b><small id="hQibla"></small></span></button>
+    <button class="htile" data-go="recite"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v-3a8 8 0 0116 0v3"/><rect x="3" y="15" width="4" height="6" rx="1"/><rect x="17" y="15" width="4" height="6" rx="1"/></svg><span><b>تلاوت</b><small id="hRecite"></small></span></button>
+    <button class="htile" data-go="prayer"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><b>اوقاتِ نماز</b><small>پانچوں نمازیں اور یاد دہانی</small></span></button>
+    <button class="htile" data-go="cal"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg><span><b>ہجری تقویم</b><small id="hOcc"></small></span></button>
+  </div>
+  <div class="hquick"><button data-go="more" data-open="secMosque">قریبی مساجد</button><button data-go="more" data-open="secTasbeeh">تسبیح</button><button data-go="more" data-open="secZakat">زکوٰۃ</button></div>
+  <div class="credit">Developed by SMAA</div>
+</section>
+
+<section id="tab-qibla" class="tab" aria-labelledby="h-qibla" hidden>
   <div class="brand">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E2B861" stroke-width="1.8" aria-hidden="true"><rect x="5" y="5" width="14" height="14"/><rect x="5" y="5" width="14" height="14" transform="rotate(45 12 12)"/></svg>
     <b>تقویم</b><span class="latin">TAQWEEM</span>
@@ -369,7 +410,7 @@ html[data-zoom="2"] #app { zoom: 1.22; }
     <p class="hint">یہ فہرست OpenStreetMap کے مفت ڈیٹا سے آتی ہے اور انٹرنیٹ چاہیے۔ کچھ مساجد نقشے میں درج نہ ہوں تو فہرست میں نہیں آئیں گی۔ درست نتائج کے لیے GPS سے مقام لیں۔</p>
   </div></details>
 
-  <details class="sec"><summary>تسبیح</summary><div class="body tas">
+  <details class="sec" id="secTasbeeh"><summary>تسبیح</summary><div class="body tas">
     <div class="seg" id="tasPhrase" style="flex-wrap:wrap;justify-content:center"></div>
     <div class="cnt" id="tasCnt">۰</div>
     <button class="big" id="tasTap" aria-label="گنتی بڑھائیں">گنیں</button>
@@ -390,7 +431,7 @@ html[data-zoom="2"] #app { zoom: 1.22; }
     <p class="hint">قضا پڑھتے جائیں اور ایک ایک کم کرتے جائیں۔ یہ ریکارڈ صرف آپ کے فون میں رہتا ہے۔</p>
   </div></details>
 
-  <details class="sec"><summary>زکوٰۃ کیلکولیٹر</summary><div class="body">
+  <details class="sec" id="secZakat"><summary>زکوٰۃ کیلکولیٹر</summary><div class="body">
     <div class="fld"><span>نقد رقم (روپے)</span><input id="zCash" inputmode="decimal" placeholder="0"></div>
     <div class="fld"><span>سونا (گرام)</span><input id="zGold" inputmode="decimal" placeholder="0"></div>
     <div class="fld"><span>چاندی (گرام)</span><input id="zSilver" inputmode="decimal" placeholder="0"></div>
@@ -405,6 +446,8 @@ html[data-zoom="2"] #app { zoom: 1.22; }
   <details class="sec"><summary>ترتیبات</summary><div class="body">
     <div class="seg"><span>تھیم:</span><button data-theme="dark" aria-pressed="true">گہرا</button><button data-theme="light" aria-pressed="false">روشن</button></div>
     <div class="seg"><span>سائز:</span><button data-zoom="0" aria-pressed="true">عام</button><button data-zoom="1" aria-pressed="false">بڑا</button><button data-zoom="2" aria-pressed="false">بہت بڑا</button></div>
+    <div class="seg" id="azanRow" hidden><span>نماز کے وقت آواز:</span><button id="azanBtn" aria-pressed="true">اذان</button></div>
+    <div class="seg"><span>اذان:</span><button id="azanTest" aria-pressed="false">اذان سنیں</button></div>
     <div class="seg" id="fastRemRow" hidden><span>روزے کی یاد دہانی:</span><button id="fastRemBtn" aria-pressed="false">بند</button></div>
     <p class="hint">روزے کی یاد دہانی: پیر، جمعرات، ایامِ بیض، عرفہ اور عاشورہ سے ایک رات پہلے۔</p>
   </div></details>
@@ -422,7 +465,10 @@ html[data-zoom="2"] #app { zoom: 1.22; }
 </div>
 
 <nav id="nav" role="tablist" aria-label="ایپ کے حصے">
-  <button role="tab" data-tab="qibla" aria-selected="true">
+  <button role="tab" data-tab="home" aria-selected="true">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>ہوم
+  </button>
+  <button role="tab" data-tab="qibla" aria-selected="false">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>قبلہ
   </button>
   <button role="tab" data-tab="recite" aria-selected="false">

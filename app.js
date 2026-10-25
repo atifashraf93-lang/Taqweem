@@ -30,7 +30,7 @@
 
   /* ---------- state ---------- */
   var state = {
-    tab: 'qibla',
+    tab: 'home',
     loc: store('loc') || { name: CITIES[0].name, lat: CITIES[0].lat, lng: CITIES[0].lng, src: 'default' },
     asr: store('asr') === 1 ? 1 : 2,
     hoff: typeof store('hoff') === 'number' ? store('hoff') : -1
@@ -51,6 +51,7 @@
     state.tab = name;
     $$('.tab').forEach(function (s) { s.hidden = s.id !== 'tab-' + name; });
     $$('#nav button').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === name ? 'true' : 'false'); });
+    if (name === 'home') { renderPrayer(); renderHome(); }
     if (name === 'prayer') renderPrayer();
     if (name === 'cal') renderCal();
     if (name === 'recite') { renderSurahs(); renderFavChips(); }
@@ -303,6 +304,7 @@
       if (key !== notifiedKey) {
         notifiedKey = key;
         toast('اب ' + prayerLabel(nextInfo.key, nextInfo.at) + ' کا وقت ہے');
+        inAppAzan();
         if (navigator.vibrate) { try { navigator.vibrate([120, 80, 120]); } catch (e) { /* ignore */ } }
       }
       renderPrayer();
@@ -332,6 +334,16 @@
     });
   }
 
+  function azanOn() { return store('azan') !== false; }
+  /* Android notification channels: one with the adhan sound (res/raw/azan_notify), one with the normal sound. */
+  function ensureChannels(LN) {
+    if (!LN.createChannel) return Promise.resolve();
+    return Promise.all([
+      LN.createChannel({ id: 'azan', name: 'اذان', description: 'نماز کے وقت اذان کی آواز', importance: 5, sound: 'azan_notify.mp3', vibration: true, visibility: 1 }),
+      LN.createChannel({ id: 'prayer', name: 'نماز کی یاد دہانی', description: 'نماز کے وقت ہلکی یاد دہانی', importance: 4, vibration: true, visibility: 1 })
+    ]).catch(function () { /* channels unavailable */ });
+  }
+
   function scheduleReminders() {
     var LN = nativeLN();
     if (!LN || (!store('rem') && !store('fastrem'))) return Promise.resolve();
@@ -342,12 +354,12 @@
       if (!t) continue;
       REM_KEYS.forEach(function (k, i) {
         if (t[k] > now) {
-          list.push({ id: d * 10 + i + 1, title: 'نماز کا وقت', body: 'اب ' + prayerLabel(k, t[k]) + ' کا وقت ہے', schedule: { at: t[k], allowWhileIdle: true } });
+          list.push({ id: d * 10 + i + 1, title: 'نماز کا وقت', body: 'اب ' + prayerLabel(k, t[k]) + ' کا وقت ہے', channelId: azanOn() ? 'azan' : 'prayer', schedule: { at: t[k], allowWhileIdle: true } });
         }
       });
     }
     if (store('fastrem')) list = list.concat(fastReminderList());
-    return clearReminders(LN)
+    return ensureChannels(LN).then(function () { return clearReminders(LN); })
       .then(function () { return list.length ? LN.schedule({ notifications: list }) : null; })
       .catch(function () { /* reminders unavailable */ });
   }
@@ -808,7 +820,7 @@
       var f = fastFor(tn + d + 1);
       if (!f || f.kind === 'forbidden' || f.kind === 'ramadan') continue;
       var at = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d, 21, 0, 0);
-      if (at > now) list.push({ id: 1000 + d, title: 'کل روزہ', body: f.text, schedule: { at: at, allowWhileIdle: true } });
+      if (at > now) list.push({ id: 1000 + d, title: 'کل روزہ', body: f.text, channelId: 'prayer', schedule: { at: at, allowWhileIdle: true } });
     }
     return list;
   }
@@ -935,6 +947,26 @@
     if (t) { store('theme', t.dataset.theme); applyLook(); }
     if (z) { store('zoom', +z.dataset.zoom); applyLook(); }
   });
+  var azanAudio = null;
+  function stopAzan() { if (azanAudio) { azanAudio.pause(); azanAudio = null; } $('#azanTest').textContent = 'اذان سنیں'; }
+  function setupAzan() {
+    function paint() { var on = azanOn(); $('#azanBtn').setAttribute('aria-pressed', String(on)); $('#azanBtn').textContent = on ? 'اذان' : 'عام آواز'; }
+    paint();
+    if (nativeLN()) $('#azanRow').hidden = false;
+    $('#azanBtn').addEventListener('click', function () { store('azan', !azanOn()); paint(); scheduleReminders(); toast(azanOn() ? 'نماز کے وقت اذان کی آواز آئے گی' : 'عام نوٹیفکیشن آواز'); });
+    $('#azanTest').addEventListener('click', function () {
+      if (azanAudio) { stopAzan(); return; }
+      azanAudio = new Audio('azan.mp3');
+      azanAudio.addEventListener('ended', stopAzan);
+      azanAudio.play().then(function () { $('#azanTest').textContent = 'روکیں'; }).catch(function () { azanAudio = null; toast('اذان نہیں چل سکی'); });
+    });
+  }
+  /* Browser use only: the app plays the adhan itself. On Android the notification carries the sound. */
+  function inAppAzan() {
+    if (nativeLN() || !azanOn() || !audio.paused) return;
+    try { var z = new Audio('azan.mp3'); z.play().catch(function () { /* blocked until the user taps the page */ }); } catch (e) { /* ignore */ }
+  }
+
   function setupFastReminders() {
     var LN = nativeLN();
     if (!LN) return;
@@ -964,6 +996,54 @@
     var b = e.target.closest('button[data-n]'); if (b) { playSurah(+b.dataset.n); openPlayer(); }
   });
 
+  /* ---------- home ---------- */
+  function renderHome() {
+    var tn = todayNum(), ht = Core.hijriFromDayNum(tn, state.hoff), now = new Date(), hr = now.getHours();
+    $('#hGreet').textContent = hr < 12 ? 'صبح بخیر' : hr < 18 ? 'السلام علیکم' : 'شام بخیر';
+    $('#h-home').textContent = ht ? ur(ht.d) + ' ' + Data.HIJRI_MONTHS[ht.m - 1] + ' ' + ur(ht.y) + 'ھ' : '—';
+    $('#hGreg').textContent = Data.WEEKDAYS[now.getDay()] + '، ' + gregText({ d: now.getDate(), m: now.getMonth() + 1, y: now.getFullYear() }) + ' · ' + state.loc.name;
+    var t = dayTimes(now);
+    if (t) {
+      var f = clock(t.fajr), m = clock(t.maghrib);
+      $('#hMini').innerHTML = '<div><small>سحری ختم</small><b>' + f.t + ' ' + f.p + '</b></div><div><small>افطار</small><b>' + m.t + ' ' + m.p + '</b></div>';
+    }
+    var fa = fastFor(tn), fb = fastFor(tn + 1), parts = [];
+    if (fa) parts.push('آج: ' + fa.text);
+    if (fb) parts.push('کل: ' + fb.text);
+    $('#hFast').hidden = !parts.length; $('#hFast').innerHTML = parts.join('<br>');
+    var b = Core.qiblaBearing(state.loc.lat, state.loc.lng);
+    $('#hQibla').textContent = ur(Math.round(b)) + '° · ' + ur(Math.round(Core.distanceKm(state.loc.lat, state.loc.lng, Core.KAABA.lat, Core.KAABA.lng)).toLocaleString('en-US')) + ' کلومیٹر';
+    var last = store('last');
+    $('#hRecite').textContent = last ? 'جاری رکھیں: سورۃ ' + SURAHS[last - 1][0] : 'شیخ السدیس کی تلاوت';
+    var items = [];
+    if (ht) Data.OCCASIONS.forEach(function (o) {
+      [ht.y, ht.y + 1].some(function (y) {
+        var n = Core.monthStartDayNum(y, o[0], state.hoff, tn) + o[1] - 1;
+        if (n >= tn) { items.push({ n: n, name: o[2] }); return true; }
+        return false;
+      });
+    });
+    items.sort(function (x, y) { return x.n - y.n; });
+    $('#hOcc').textContent = items.length ? items[0].name + ' · ' + (items[0].n - tn === 0 ? 'آج' : ur(items[0].n - tn) + ' دن') : 'اسلامی ایام';
+    tickHome();
+  }
+  function tickHome() {
+    if (state.tab !== 'home') return;
+    var now = new Date();
+    if (!nextInfo || nextInfo.at <= now) renderPrayer();
+    if (!nextInfo) return;
+    var c = clock(nextInfo.at);
+    $('#hnName').textContent = prayerLabel(nextInfo.key, nextInfo.at);
+    $('#hnTime').textContent = c.t; $('#hnPer').textContent = c.p;
+    $('#hnRem').textContent = remainText(nextInfo.at - now);
+  }
+  setInterval(tickHome, 1000);
+  document.addEventListener('click', function (e) {
+    var g = e.target.closest('[data-go]'); if (!g) return;
+    showTab(g.dataset.go);
+    if (g.dataset.open) { var d = document.getElementById(g.dataset.open); if (d) { d.open = true; d.scrollIntoView(); } }
+  });
+
   /* ---------- start ---------- */
   var last = store('last');
   if (last && last >= 1 && last <= 114) $('#playFirstTxt').textContent = 'سورۃ ' + SURAHS[last - 1][0] + ' سے جاری رکھیں';
@@ -972,10 +1052,11 @@
   initCompass();
   setupReminders();
   setupFastReminders();
+  setupAzan();
   applyLook();
   renderFavChips();
   updatePlayUI();
-  showTab('qibla');
+  showTab('home');
   if (state.loc.src === 'default') locate(true);
 
   setTimeout(function () {

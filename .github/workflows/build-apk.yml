@@ -28,7 +28,7 @@ jobs:
       - name: Prepare web folder
         run: |
           mkdir -p www
-          cp index.html core.js data.js app.js sw.js manifest.webmanifest icon.svg icon-192.png icon-512.png www/
+          cp index.html core.js data.js app.js sw.js manifest.webmanifest icon.svg icon-192.png icon-512.png azan.mp3 www/
           if [ -f translation-ur.txt ]; then cp translation-ur.txt www/; fi
 
       - name: Install dependencies
@@ -41,6 +41,11 @@ jobs:
         run: |
           sed -i 's#</manifest>#    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n</manifest>#' android/app/src/main/AndroidManifest.xml
           grep -c "ACCESS_FINE_LOCATION" android/app/src/main/AndroidManifest.xml
+
+      - name: Adhan notification sound
+        run: |
+          mkdir -p android/app/src/main/res/raw
+          cp azan_notify.mp3 android/app/src/main/res/raw/azan_notify.mp3
 
       - name: App icons
         run: |
