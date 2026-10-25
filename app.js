@@ -865,30 +865,143 @@
   }
   $('#mosqBtn').addEventListener('click', findMosques);
 
-  /* ---------- tasbeeh ---------- */
-  var PHRASES = ['سبحان اللہ', 'الحمد للہ', 'اللہ اکبر', 'استغفراللہ', 'درود شریف'];
+  /* ---------- click sound (all buttons) ---------- */
+  var clickOn = store('click') !== false;
+  var actx = null;
+  function tick(strong) {
+    if (!clickOn) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === 'suspended') actx.resume();
+      var o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime;
+      o.type = 'triangle'; o.frequency.setValueAtTime(strong ? 900 : 1300, t); o.frequency.exponentialRampToValueAtTime(strong ? 420 : 700, t + 0.05);
+      g.gain.setValueAtTime(strong ? 0.28 : 0.14, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + 0.08);
+    } catch (e) { /* audio unavailable */ }
+    if (navigator.vibrate) { try { navigator.vibrate(strong ? 14 : 8); } catch (e2) { /* ignore */ } }
+  }
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest && e.target.closest('button, summary, [role="tab"], a');
+    if (el && el.id !== 'tasTap') tick(false);
+  }, true);
+  function paintClick() { var b = $('#clickBtn'); b.setAttribute('aria-pressed', String(clickOn)); b.textContent = clickOn ? 'آن' : 'بند'; }
+  $('#clickBtn').addEventListener('click', function () { clickOn = !clickOn; store('click', clickOn); paintClick(); if (clickOn) tick(false); });
+  paintClick();
+
+  /* ---------- tasbeeh and darood ---------- */
+  var DAROOD_IBRAHIMI = 'اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ كَمَا صَلَّيْتَ عَلَى إِبْرَاهِيمَ وَعَلَى آلِ إِبْرَاهِيمَ إِنَّكَ حَمِيدٌ مَجِيدٌ، اللَّهُمَّ بَارِكْ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ كَمَا بَارَكْتَ عَلَى إِبْرَاهِيمَ وَعَلَى آلِ إِبْرَاهِيمَ إِنَّكَ حَمِيدٌ مَجِيدٌ';
+  var PHRASES = [
+    { n: 'سبحان اللہ', ar: 'سُبْحَانَ اللَّهِ', ur: 'اللہ پاک ہے', clip: 'subhan' },
+    { n: 'الحمد للہ', ar: 'الْحَمْدُ لِلَّهِ', ur: 'تمام تعریفیں اللہ کے لیے ہیں', clip: 'hamd' },
+    { n: 'اللہ اکبر', ar: 'اللَّهُ أَكْبَرُ', ur: 'اللہ سب سے بڑا ہے', clip: 'akbar' },
+    { n: 'لا الٰہ الا اللہ', ar: 'لَا إِلَهَ إِلَّا اللَّهُ', ur: 'اللہ کے سوا کوئی معبود نہیں' },
+    { n: 'استغفراللہ', ar: 'أَسْتَغْفِرُ اللَّهَ', ur: 'میں اللہ سے بخشش مانگتا ہوں', listen: 'istighfar' },
+    { n: 'درود ابراہیمی', ar: DAROOD_IBRAHIMI, ur: 'درودِ ابراہیمی (نماز میں پڑھا جانے والا درود)', listen: 'darood', sm: true },
+    { n: 'مختصر درود', ar: 'صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ', ur: 'اللہ کی رحمت اور سلامتی ہو آپ ﷺ پر' },
+    { n: 'درود و سلام', ar: 'اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِهِ وَصَحْبِهِ وَسَلِّمْ', ur: 'اے اللہ! ہمارے سردار محمد ﷺ اور ان کی آل و اصحاب پر رحمت اور سلام بھیج', sm: true },
+    { n: 'لا حول', ar: 'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ', ur: 'گناہ سے بچنے کی طاقت اور نیکی کی توفیق اللہ ہی کی طرف سے ہے' }
+  ];
   var tas = store('tas') || { p: 0, c: 0, t: 33 };
+  if (tas.p < 0 || tas.p >= PHRASES.length || tas.v !== 2) { tas.p = 0; tas.c = 0; tas.v = 2; }
+  var tasVoice = store('tasVoice') !== false;
+  var clips = {}, clipNow = '';
+  function clip(name) {
+    if (!clips[name]) { clips[name] = new Audio('audio/' + name + '.mp3'); clips[name].preload = 'auto'; clips[name].addEventListener('ended', paintListen); clips[name].addEventListener('pause', paintListen); }
+    return clips[name];
+  }
+  function stopClips() { Object.keys(clips).forEach(function (k) { try { clips[k].pause(); clips[k].currentTime = 0; } catch (e) { /* ignore */ } }); clipNow = ''; }
+  function paintListen() {
+    var P = PHRASES[tas.p], name = P.listen || P.clip, b = $('#tasListen');
+    b.hidden = !name;
+    var on = name && clips[name] && !clips[name].paused;
+    b.textContent = on ? '⏹ روکیں' : '▶ آواز سنیں';
+    $('#tasVoice').hidden = !P.clip;
+  }
   function paintTas() {
+    var P = PHRASES[tas.p];
     $('#tasCnt').textContent = ur(tas.c);
-    $('#tasTap').textContent = PHRASES[tas.p];
-    $('#tasPhrase').innerHTML = PHRASES.map(function (p, i) { return '<button data-p="' + i + '" aria-pressed="' + (i === tas.p) + '">' + p + '</button>'; }).join('');
+    $('#tasAr').textContent = P.ar; $('#tasAr').className = 'tar' + (P.sm ? ' sm' : '');
+    $('#tasUr').textContent = P.ur;
+    $('#tasTap').textContent = 'گنیں';
+    $('#tasPhrase').innerHTML = PHRASES.map(function (p, i) { return '<button data-p="' + i + '" aria-pressed="' + (i === tas.p) + '">' + p.n + '</button>'; }).join('');
     $$('[data-t]', $('#tab-more')).forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.t === tas.t)); });
+    $('#tasVoice').setAttribute('aria-pressed', String(tasVoice));
+    paintListen();
+  }
+  function playClip(name, restart) {
+    if (!audio.paused) audio.pause();
+    Object.keys(clips).forEach(function (k) { if (k !== name) { try { clips[k].pause(); clips[k].currentTime = 0; } catch (e) { /* ignore */ } } });
+    var c = clip(name); if (restart) { try { c.currentTime = 0; } catch (e) { /* ignore */ } }
+    var p = c.play(); if (p && p.catch) p.catch(function () { toast('آواز نہیں چل سکی'); });
   }
   $('#tasTap').addEventListener('click', function () {
     tas.c++;
-    if (navigator.vibrate) { try { navigator.vibrate(tas.c % tas.t === 0 ? [80, 60, 80] : 12); } catch (e) { /* ignore */ } }
-    if (tas.c % tas.t === 0) toast(ur(tas.c) + ' مکمل ہوئے');
+    var done = tas.c % tas.t === 0;
+    tick(true);
+    if (navigator.vibrate && done) { try { navigator.vibrate([80, 60, 80]); } catch (e) { /* ignore */ } }
+    var P = PHRASES[tas.p];
+    if (tasVoice && P.clip) playClip(P.clip, true);
+    if (done) toast(ur(tas.c) + ' مکمل ہوئے');
     store('tas', tas); paintTas();
   });
+  $('#tasListen').addEventListener('click', function () {
+    var P = PHRASES[tas.p], name = P.listen || P.clip; if (!name) return;
+    var c = clip(name);
+    if (!c.paused) { c.pause(); c.currentTime = 0; } else playClip(name, true);
+    paintListen();
+  });
+  $('#tasVoice').addEventListener('click', function () { tasVoice = !tasVoice; store('tasVoice', tasVoice); if (!tasVoice) stopClips(); paintTas(); });
   $('#tasReset').addEventListener('click', function () { tas.c = 0; store('tas', tas); paintTas(); });
   $('#tasPhrase').addEventListener('click', function (e) {
     var b = e.target.closest('[data-p]'); if (!b) return;
-    tas.p = +b.dataset.p; tas.c = 0; store('tas', tas); paintTas();
+    stopClips(); tas.p = +b.dataset.p; tas.c = 0; store('tas', tas); paintTas();
   });
   $('#tab-more').addEventListener('click', function (e) {
     var b = e.target.closest('[data-t]'); if (!b) return;
     tas.t = +b.dataset.t; store('tas', tas); paintTas();
   });
+
+  /* ---------- hadith ---------- */
+  var HD = window.HADITH || [], HT = window.HADITH_TOPICS || {};
+  var hfav = store('hfav') || [], hst = { topic: 'all', q: '' };
+  function hadithOfDay() { var d = new Date(), n = Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(d.getFullYear(), 0, 0)) / 864e5); return (n + d.getFullYear()) % HD.length; }
+  function normAr(s) { return String(s).replace(/[ً-ٰٟۖ-ۭـ]/g, '').replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ۃ|ہ/g, 'ه').replace(/ک/g, 'ك').replace(/ی/g, 'ي'); }
+  function hEsc(s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+  function paintHadith(focus) {
+    var q = normAr(hst.q.trim()), shown = 0;
+    $('#hTopics').innerHTML = Object.keys(HT).map(function (k) { return '<button data-ht="' + k + '" aria-pressed="' + (hst.topic === k) + '">' + HT[k] + '</button>'; }).join('') + '<button data-ht="fav" aria-pressed="' + (hst.topic === 'fav') + '">★ پسندیدہ</button>';
+    var html = HD.map(function (h, i) {
+      if (hst.topic === 'fav' ? hfav.indexOf(i) < 0 : (hst.topic !== 'all' && h[0] !== hst.topic)) return '';
+      if (q && normAr(h[1] + ' ' + h[2] + ' ' + h[3]).indexOf(q) < 0) return '';
+      shown++;
+      var on = hfav.indexOf(i) > -1;
+      return '<div class="hcard" id="hd' + i + '"><div class="ht"><span>' + HT[h[0]] + '</span><span>' + ur(i + 1) + '</span></div><div class="har">' + hEsc(h[1]) + '</div><div class="hur">' + hEsc(h[2]) + '</div><div class="hs">' + hEsc(h[3]) + '</div><div class="hact"><button data-hfav="' + i + '" aria-pressed="' + on + '">' + (on ? '★ پسندیدہ' : '☆ پسندیدہ') + '</button><button data-hshare="' + i + '">شیئر</button></div></div>';
+    }).join('');
+    $('#hList').innerHTML = html + (shown ? '<p class="hnote">ترجمہ و حوالہ مختصر ہے۔ مکمل تفصیل کے لیے مستند کتبِ حدیث اور اہلِ علم سے رجوع کریں۔</p>' : '<div class="empty">کوئی حدیث نہیں ملی۔</div>');
+    $('#hCount').textContent = '· ' + ur(shown);
+    if (focus != null) { var el = document.getElementById('hd' + focus); if (el) { el.scrollIntoView({ block: 'start' }); el.classList.add('flash'); } }
+  }
+  function openHadith(focus) { hst = { topic: 'all', q: '' }; $('#hSearch').value = ''; $('#hadith').hidden = false; paintHadith(focus); if (focus == null) $('#hList').scrollTop = 0; }
+  function shareHadith(i) {
+    var h = HD[i], text = h[1] + '\n\n' + h[2] + '\n\n— ' + h[3] + '\n(تقویم، Developed by SMAA)';
+    if (navigator.share) { navigator.share({ text: text }).catch(function () { /* cancelled */ }); }
+    else if (navigator.clipboard) { navigator.clipboard.writeText(text).then(function () { toast('نقل کر لی گئی'); }).catch(function () { toast('شیئر نہیں ہو سکا'); }); }
+  }
+  function paintHdayHome() { if (!HD.length) return; var h = HD[hadithOfDay()]; $('#hdAr').textContent = h[1]; $('#hdUr').textContent = h[2]; }
+  $('#hBack').addEventListener('click', function () { $('#hadith').hidden = true; });
+  $('#hSearch').addEventListener('input', function () { hst.q = this.value; paintHadith(); });
+  $('#hadith').addEventListener('click', function (e) {
+    var t = e.target.closest('[data-ht]');
+    if (t) { hst.topic = t.dataset.ht; paintHadith(); return; }
+    t = e.target.closest('[data-hfav]');
+    if (t) { var i = +t.dataset.hfav, ix = hfav.indexOf(i); if (ix > -1) hfav.splice(ix, 1); else hfav.push(i); store('hfav', hfav); var y = $('#hList').scrollTop; paintHadith(); $('#hList').scrollTop = y; return; }
+    t = e.target.closest('[data-hshare]'); if (t) shareHadith(+t.dataset.hshare);
+  });
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('[data-hday]')) openHadith(hadithOfDay());
+    else if (e.target.closest('[data-hadith]')) openHadith(null);
+  });
+  paintHdayHome();
 
   /* ---------- prayer tracker + qaza ---------- */
   var trk = store('trk') || {};

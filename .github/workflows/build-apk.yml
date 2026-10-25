@@ -28,7 +28,8 @@ jobs:
       - name: Prepare web folder
         run: |
           mkdir -p www
-          cp index.html core.js data.js app.js sw.js manifest.webmanifest icon.svg icon-192.png icon-512.png azan.mp3 www/
+          cp index.html core.js data.js hadith.js app.js sw.js manifest.webmanifest icon.svg icon-192.png icon-512.png azan.mp3 www/
+          cp -r audio www/audio
           if [ -f translation-ur.txt ]; then cp translation-ur.txt www/; fi
 
       - name: Install dependencies

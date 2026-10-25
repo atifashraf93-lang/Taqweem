@@ -266,6 +266,36 @@ html[data-zoom="2"] #app { zoom: 1.22; }
 #splash .tag { font-size: 15px; color: var(--muted); line-height: 2.1; margin-top: 8px; }
 #splash .dev { position: absolute; bottom: max(28px, env(safe-area-inset-bottom, 0px)); direction: ltr; font-family: var(--arabic); font-size: 15px; letter-spacing: 1px; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { #splash { transition: none; } }
+
+/* tasbeeh upgrade */
+.tas .tar { font-family: var(--arabic); font-size: 30px; line-height: 2.1; color: var(--accent); margin-top: 4px; }
+.tas .tar.sm { font-size: 20px; line-height: 2.2; }
+.tas .tmean { font-size: 14px; color: var(--muted); line-height: 2; }
+.tas .big { font-size: 20px; font-weight: 600; }
+.tas .trow { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+.tas .trow button { min-height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid var(--line); background: var(--surface); font-size: 14px; line-height: 2; }
+.tas .trow button[aria-pressed="true"] { border-color: var(--accent); background: var(--surface-hi); }
+/* hadith */
+.hday { margin-top: 10px; width: 100%; text-align: right; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 10px 16px 12px; }
+.hday small { color: var(--accent); font-size: 13px; line-height: 2; }
+.hday .har { font-family: var(--arabic); font-size: 19px; line-height: 2.1; direction: rtl; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.hday .hur { font-size: 14px; line-height: 2.1; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+#hadith { position: absolute; inset: 0; z-index: 25; background: var(--bg); display: flex; flex-direction: column; padding: max(12px, env(safe-area-inset-top, 0px)) 16px 0; }
+#hadith[hidden] { display: none; }
+#hadith .hl { flex: 1; overflow-y: auto; padding-bottom: max(24px, env(safe-area-inset-bottom, 0px)); }
+.htopics { display: flex; gap: 8px; overflow-x: auto; padding: 8px 0; flex: none; }
+.htopics button { flex: none; min-height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid var(--line); background: var(--surface); font-size: 14px; line-height: 2; }
+.htopics button[aria-pressed="true"] { border-color: var(--accent); background: var(--surface-hi); color: var(--accent); }
+.hcard { margin-top: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 10px 16px 8px; }
+.hcard.flash { border-color: var(--accent); }
+.hcard .ht { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 13px; line-height: 2; }
+.hcard .har { font-family: var(--arabic); font-size: 22px; line-height: 2.2; direction: rtl; text-align: right; margin: 4px 0; }
+.hcard .hur { font-size: 16px; line-height: 2.2; }
+.hcard .hs { margin-top: 4px; font-size: 13px; color: var(--accent); line-height: 2; }
+.hcard .hact { display: flex; gap: 8px; margin-top: 6px; }
+.hcard .hact button { min-height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid var(--line); background: var(--bg-deep); font-size: 13px; line-height: 2; }
+.hcard .hact button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.hnote { font-size: 12px; color: var(--muted); line-height: 2; margin: 12px 0 0; text-align: center; }
 </style>
 </head>
 <body>
@@ -278,13 +308,14 @@ html[data-zoom="2"] #app { zoom: 1.22; }
   <button class="hnext" data-go="prayer"><span><small>اگلی نماز</small><span class="nm" id="hnName">—</span><span class="rm" id="hnRem"></span></span><span class="tm"><b id="hnTime" style="font-weight:600">—</b><span id="hnPer"></span></span></button>
   <div class="hmini" id="hMini"></div>
   <div class="fastnote" id="hFast" hidden></div>
+  <button class="hday" id="hDay" data-hday><small>آج کی حدیث</small><div class="har" id="hdAr"></div><div class="hur" id="hdUr"></div></button>
   <div class="htiles">
     <button class="htile" data-go="qibla"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg><span><b>قبلہ</b><small id="hQibla"></small></span></button>
     <button class="htile" data-go="recite"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v-3a8 8 0 0116 0v3"/><rect x="3" y="15" width="4" height="6" rx="1"/><rect x="17" y="15" width="4" height="6" rx="1"/></svg><span><b>تلاوت</b><small id="hRecite"></small></span></button>
     <button class="htile" data-go="prayer"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><b>اوقاتِ نماز</b><small>پانچوں نمازیں اور یاد دہانی</small></span></button>
     <button class="htile" data-go="cal"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg><span><b>ہجری تقویم</b><small id="hOcc"></small></span></button>
   </div>
-  <div class="hquick"><button data-go="more" data-open="secMosque">قریبی مساجد</button><button data-go="more" data-open="secTasbeeh">تسبیح</button><button data-go="more" data-open="secZakat">زکوٰۃ</button></div>
+  <div class="hquick"><button data-go="more" data-open="secMosque">قریبی مساجد</button><button data-hadith>احادیث</button><button data-go="more" data-open="secTasbeeh">تسبیح</button><button data-go="more" data-open="secZakat">زکوٰۃ</button></div>
   <div class="credit">Developed by SMAA</div>
 </section>
 
@@ -410,14 +441,16 @@ html[data-zoom="2"] #app { zoom: 1.22; }
     <p class="hint">یہ فہرست OpenStreetMap کے مفت ڈیٹا سے آتی ہے اور انٹرنیٹ چاہیے۔ کچھ مساجد نقشے میں درج نہ ہوں تو فہرست میں نہیں آئیں گی۔ درست نتائج کے لیے GPS سے مقام لیں۔</p>
   </div></details>
 
-  <details class="sec" id="secTasbeeh"><summary>تسبیح</summary><div class="body tas">
+  <details class="sec" id="secTasbeeh"><summary>تسبیح اور درود شریف</summary><div class="body tas">
     <div class="seg" id="tasPhrase" style="flex-wrap:wrap;justify-content:center"></div>
+    <div class="tar" id="tasAr"></div>
+    <div class="tmean" id="tasUr"></div>
     <div class="cnt" id="tasCnt">۰</div>
     <button class="big" id="tasTap" aria-label="گنتی بڑھائیں">گنیں</button>
     <div class="seg" style="justify-content:center"><span>ہدف:</span>
       <button data-t="33" aria-pressed="true">۳۳</button><button data-t="99" aria-pressed="false">۹۹</button><button data-t="100" aria-pressed="false">۱۰۰</button>
     </div>
-    <button class="btn ghost" id="tasReset" style="margin-top:8px">صفر کریں</button>
+    <div class="trow"><button id="tasListen">▶ آواز سنیں</button><button id="tasVoice" aria-pressed="true">ہر گنتی پر آواز</button><button id="tasReset">صفر کریں</button></div>
   </div></details>
 
   <details class="sec"><summary>نماز ٹریکر اور قضا</summary><div class="body">
@@ -447,6 +480,7 @@ html[data-zoom="2"] #app { zoom: 1.22; }
     <div class="seg"><span>تھیم:</span><button data-theme="dark" aria-pressed="true">گہرا</button><button data-theme="light" aria-pressed="false">روشن</button></div>
     <div class="seg"><span>سائز:</span><button data-zoom="0" aria-pressed="true">عام</button><button data-zoom="1" aria-pressed="false">بڑا</button><button data-zoom="2" aria-pressed="false">بہت بڑا</button></div>
     <div class="seg" id="azanRow" hidden><span>نماز کے وقت آواز:</span><button id="azanBtn" aria-pressed="true">اذان</button></div>
+    <div class="seg"><span>بٹن کی کلک آواز:</span><button id="clickBtn" aria-pressed="true">آن</button></div>
     <div class="seg"><span>اذان:</span><button id="azanTest" aria-pressed="false">اذان سنیں</button></div>
     <div class="seg" id="fastRemRow" hidden><span>روزے کی یاد دہانی:</span><button id="fastRemBtn" aria-pressed="false">بند</button></div>
     <p class="hint">روزے کی یاد دہانی: پیر، جمعرات، ایامِ بیض، عرفہ اور عاشورہ سے ایک رات پہلے۔</p>
@@ -548,8 +582,17 @@ html[data-zoom="2"] #app { zoom: 1.22; }
 
 </div>
 
+<div id="hadith" hidden role="dialog" aria-label="احادیث">
+  <button class="back" id="hBack"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>واپس</button>
+  <h1 style="margin:0;font-size:22px;line-height:2">احادیثِ مبارکہ <small id="hCount" style="font-size:13px;color:var(--muted)"></small></h1>
+  <div class="search" style="margin:4px 0 0"><input id="hSearch" type="search" placeholder="حدیث تلاش کریں" aria-label="حدیث تلاش کریں" autocomplete="off"></div>
+  <div class="htopics" id="hTopics"></div>
+  <div class="hl" id="hList"></div>
+</div>
+
 <script src="core.js"></script>
 <script src="data.js"></script>
+<script src="hadith.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
