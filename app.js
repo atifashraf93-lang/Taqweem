@@ -1003,6 +1003,47 @@
   });
   paintHdayHome();
 
+  /* ---------- naat ---------- */
+  var NT = window.NAATS || [], naatAudio = new Audio(), nCur = null;
+  naatAudio.preload = 'none';
+  function nTime(s) { if (!isFinite(s)) return '0:00'; s = Math.floor(s); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+  function nList() {
+    nCur = null; $('#nTitle').textContent = 'نعت و سلام';
+    $('#nBody').innerHTML = NT.map(function (n, i) {
+      return '<button class="ncard" data-nid="' + i + '"><b>' + hEsc(n.t) + '</b><small>' + hEsc(n.poet) + ' · <span class="nk">' + n.kind + '</span>' + (n.audio ? ' · 🔊 آڈیو' : '') + '</small></button>';
+    }).join('') + '<p class="hnote">یہاں وہ کلام ہے جس کے شعرا کو وفات پائے طویل عرصہ ہو چکا ہے۔ اشعار منتخب ہیں، مکمل کلام اور درست متن کے لیے مستند دیوان سے ملا لیں۔</p>';
+  }
+  function nShow(i) {
+    var n = NT[i]; nCur = i; $('#nTitle').textContent = n.t;
+    var arabic = /[ً-ٟ]/.test(n.v[0][0]);
+    $('#nBody').innerHTML = '<div class="hs" style="text-align:center;margin-top:6px">' + hEsc(n.poet) + ' · ' + n.kind + '</div>' +
+      (n.audio ? '<div class="nplay"><button id="nPlay" aria-label="چلائیں">▶</button><span id="nCur">0:00</span><input id="nSeek" type="range" min="0" max="100" value="0" aria-label="آگے پیچھے"><span id="nDur">0:00</span></div>' : '<p class="noaudio">اس کلام کی ریکارڈنگ ابھی شامل نہیں۔</p>') +
+      '<div class="nv">' + n.v.map(function (c, k) { return '<div class="l1' + (arabic ? ' ar' : '') + '">' + hEsc(c[0]) + '</div><div class="l2' + (arabic ? ' ar' : '') + '">' + hEsc(c[1]) + '</div>' + (n.m && n.m[k] ? '<div class="mean">' + hEsc(n.m[k]) + '</div>' : '') + (k < n.v.length - 1 ? '<hr style="border:none;border-top:1px solid var(--line);margin:6px 24px">' : ''); }).join('') + '</div>' +
+      '<button class="btn ghost" data-nshare="' + i + '" style="margin-top:12px">شیئر کریں</button>';
+    $('#nBody').scrollTop = 0;
+    if (n.audio) { if (!naatAudio.src || naatAudio.src.indexOf(n.audio) < 0) { naatAudio.src = n.audio; } nPaint(); }
+  }
+  function nPaint() {
+    var b = $('#nPlay'); if (!b) return;
+    b.textContent = naatAudio.paused ? '▶' : '⏸';
+    $('#nCur').textContent = nTime(naatAudio.currentTime); $('#nDur').textContent = nTime(naatAudio.duration);
+    $('#nSeek').value = naatAudio.duration ? Math.round(naatAudio.currentTime / naatAudio.duration * 100) : 0;
+  }
+  ['timeupdate', 'play', 'pause', 'loadedmetadata', 'ended'].forEach(function (ev) { naatAudio.addEventListener(ev, nPaint); });
+  naatAudio.addEventListener('play', function () { if (!audio.paused) audio.pause(); stopClips(); });
+  audio.addEventListener('play', function () { if (!naatAudio.paused) naatAudio.pause(); });
+  function openNaat() { $('#naat').hidden = false; nList(); }
+  $('#nBack').addEventListener('click', function () { if (nCur !== null) nList(); else { $('#naat').hidden = true; naatAudio.pause(); } });
+  $('#naat').addEventListener('click', function (e) {
+    var t = e.target.closest('[data-nid]'); if (t) return nShow(+t.dataset.nid);
+    if (e.target.closest('#nPlay')) { if (naatAudio.paused) { var p = naatAudio.play(); if (p && p.catch) p.catch(function () { toast('آواز نہیں چل سکی'); }); } else naatAudio.pause(); return; }
+    t = e.target.closest('[data-nshare]');
+    if (t) { var n = NT[+t.dataset.nshare], text = n.t + '\n' + n.poet + '\n\n' + n.v.map(function (c) { return c[0] + '\n' + c[1]; }).join('\n\n') + '\n\n— تقویم، Developed by SMAA'; if (navigator.share) navigator.share({ text: text }).catch(function () { /* cancelled */ }); else if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { toast('نقل کر لی گئی'); }); }
+  });
+  $('#naat').addEventListener('input', function (e) { if (e.target.id === 'nSeek' && naatAudio.duration) naatAudio.currentTime = naatAudio.duration * e.target.value / 100; });
+  document.addEventListener('click', function (e) { if (e.target.closest('[data-naat]')) openNaat(); });
+
+
   /* ---------- prayer tracker + qaza ---------- */
   var trk = store('trk') || {};
   var qaza = typeof store('qaza') === 'number' ? store('qaza') : 0;
