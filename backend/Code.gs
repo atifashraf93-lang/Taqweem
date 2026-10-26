@@ -1,6 +1,7 @@
 // Google Apps Script: receives anonymous counts from the SMAA apps and stores them in a Google Sheet.
-// Sheet gets a tab "events" (one row per event). doGet returns totals for the dashboard.
+// Tab "events" holds one row per event. Opening the web-app URL with ?key=<KEY> shows the dashboard.
 var SHEET = 'events';
+var KEY = 'CHANGE-THIS-TO-A-SECRET-WORD'; // dashboard link ends with ?key=<this word>
 function sh_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var s = ss.getSheetByName(SHEET) || ss.insertSheet(SHEET);
@@ -18,7 +19,7 @@ function doPost(e) {
   } catch (err) {}
   return ContentService.createTextOutput('ok');
 }
-function doGet() {
+function getStats() {
   var s = sh_(), v = s.getDataRange().getValues(); v.shift();
   var tz = Session.getScriptTimeZone(), days = {}, users = {}, feats = {}, vers = {}, zones = {}, secs = 0, apps = {};
   var today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
@@ -40,5 +41,9 @@ function doGet() {
   Object.keys(feats).forEach(function (k) { var p = k.split('|'); out.features.push({ app: p[0], ev: p[1], n: feats[k] }); });
   Object.keys(vers).forEach(function (k) { var p = k.split('|'), kk = p[0] + '|' + p[1]; out.versions[kk] = (out.versions[kk] || 0) + 1; });
   Object.keys(zones).forEach(function (k) { var p = k.split('|'), kk = p[0] + '|' + p[1]; out.zones[kk] = (out.zones[kk] || 0) + 1; });
-  return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
+  return out;
+}
+function doGet(e) {
+  if (!e || !e.parameter || e.parameter.key !== KEY) return ContentService.createTextOutput('Not allowed');
+  return HtmlService.createHtmlOutputFromFile('Dashboard').setTitle('SMAA Stats').addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }

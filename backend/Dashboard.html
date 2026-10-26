@@ -1,0 +1,43 @@
+<!doctype html><html><head><base target="_top"><meta charset="utf-8">
+<style>
+:root{--bg:#0E2523;--card:#16352F;--line:#2A514A;--fg:#F4EFE3;--mut:#A9BDB6;--gold:#E2B861}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif;padding:16px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;color:var(--gold);margin:0 0 10px;letter-spacing:.04em;text-transform:uppercase}
+.sub{color:var(--mut);margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+.big{font-size:34px;font-weight:700;font-variant-numeric:tabular-nums}
+.row{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:14px}
+.row .n{width:46px;text-align:right;font-variant-numeric:tabular-nums;color:var(--mut)}
+.row .l{flex:0 0 38%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar{flex:1;height:10px;background:var(--bg);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--gold)}
+select{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:6px}
+</style></head><body>
+<h1>SMAA app usage</h1><div class="sub">Anonymous counts only. <select id="app"></select> <span id="st">Loading...</span></div>
+<div class="grid">
+<div class="card"><h2>Installs seen</h2><div class="big" id="tot">-</div><div class="sub" id="tod"></div></div>
+<div class="card"><h2>Time in app</h2><div class="big" id="mins">-</div><div class="sub">minutes in total</div></div>
+<div class="card" style="grid-column:1/-1"><h2>Last 14 days (users per day)</h2><div id="daily"></div></div>
+<div class="card"><h2>Most used features</h2><div id="feat"></div></div>
+<div class="card"><h2>App versions</h2><div id="ver"></div></div>
+<div class="card"><h2>Time zones</h2><div id="zon"></div></div>
+</div>
+<script>
+var D=null;
+function bars(id,items){var m=Math.max.apply(null,items.map(function(x){return x[1]}).concat([1])),h='';
+ items.forEach(function(x){h+='<div class="row"><span class="l" title="'+x[0]+'">'+x[0]+'</span><span class="bar"><i style="width:'+(x[1]/m*100)+'%"></i></span><span class="n">'+x[1]+'</span></div>'});
+ document.getElementById(id).innerHTML=h||'<div class="sub">No data yet</div>';}
+function pick(o,app){var r=[];Object.keys(o).forEach(function(k){var p=k.split('|');if(p[0]===app)r.push([p[1]||'?',o[k]])});return r.sort(function(a,b){return b[1]-a[1]}).slice(0,8)}
+function show(){var a=document.getElementById('app').value;
+ document.getElementById('tot').textContent=D.totalUsers[a]||0;
+ var days=D.daily.filter(function(d){return d.app===a}).slice(-14);
+ var t=days.filter(function(d){return d.day===D.today})[0];
+ document.getElementById('tod').textContent='Today: '+(t?t.users:0)+' users, '+(t?t.opens:0)+' opens';
+ bars('daily',days.map(function(d){return [d.day.slice(5)+' ('+d.opens+' opens)',d.users]}));
+ bars('feat',D.features.filter(function(f){return f.app===a}).sort(function(x,y){return y.n-x.n}).slice(0,10).map(function(f){return [f.ev,f.n]}));
+ bars('ver',pick(D.versions,a));bars('zon',pick(D.zones,a));
+ document.getElementById('mins').textContent=Math.round(D.totalSecs/60);}
+google.script.run.withSuccessHandler(function(d){D=d;var s=document.getElementById('app');
+ (d.apps.length?d.apps:['taqweem']).forEach(function(a){var o=document.createElement('option');o.textContent=a;s.appendChild(o)});
+ s.onchange=show;document.getElementById('st').textContent='';show();}).withFailureHandler(function(e){document.getElementById('st').textContent='Error: '+e.message}).getStats();
+</script></body></html>
