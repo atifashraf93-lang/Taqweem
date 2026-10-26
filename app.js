@@ -741,16 +741,16 @@
         '<label class="btn" for="tFile">ترجمہ کی فائل چنیں</label><input type="file" id="tFile" accept=".txt,text/plain" hidden></div>';
       return;
     }
-    var lines = (trans && trans.map[player.n]) || [], ay = (arab && arab.map[player.n]) || [], n = Math.max(lines.length, ay.length), html = '', fs = +(store('qfs') || 28);
-    if (arab && player.n !== 1 && player.n !== 9) html += '<div class="qbis" style="font-size:' + fs + 'px">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>';
+    var lines = (trans && trans.map[player.n]) || [], ay = (arab && arab.map[player.n]) || [], n = Math.max(lines.length, ay.length), html = '', fs = +(store('qfs') || 28), md = store('qmode') || 'both';
+    if (arab && md !== 'ur' && player.n !== 1 && player.n !== 9) html += '<div class="qbis" style="font-size:' + fs + 'px">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>';
     for (var i = 0; i < n; i++) {
       if (!lines[i] && !ay[i]) continue;
-      html += '<div class="qa" data-i="' + i + '">' + (ay[i] ? '<div class="qar" style="font-size:' + fs + 'px">' + escapeHtml(ay[i]) + ' <span class="qn">﴿' + ur(i + 1) + '﴾</span></div>' : '<span class="qn">' + ur(i + 1) + '</span>') +
-        (lines[i] ? '<p>' + escapeHtml(lines[i]) + '</p>' : '') + '</div>';
+      html += '<div class="qa" data-i="' + i + '">' + (ay[i] && md !== 'ur' ? '<div class="qar" style="font-size:' + fs + 'px">' + escapeHtml(ay[i]) + ' <span class="qn">﴿' + ur(i + 1) + '﴾</span></div>' : '<span class="qn">' + ur(i + 1) + '</span>') +
+        (lines[i] && md !== 'ar' ? '<p' + (md === 'ur' ? ' class="uo" style="font-size:' + Math.round(fs * .7) + 'px"' : '') + '>' + escapeHtml(lines[i]) + '</p>' : '') + '</div>';
     }
     if (!html) html = '<div class="empty">اس سورت کا متن فائل میں نہیں ملا۔</div>';
     var who = trans ? (trans.maududi ? 'مولانا ابوالاعلیٰ مودودی' : 'درآمد شدہ فائل') : '';
-    box.innerHTML = '<div class="qtools"><button data-fs="-2" aria-label="چھوٹا">A−</button><button data-fs="2" aria-label="بڑا">A+</button><button id="qsync" aria-pressed="' + (store('qsync') !== false) + '">آیت نمایاں</button></div>' + html +
+    box.innerHTML = '<div class="qtools"><button data-md="ar" aria-pressed="' + (md === 'ar') + '">عربی</button><button data-md="both" aria-pressed="' + (md === 'both') + '">عربی + اردو</button><button data-md="ur" aria-pressed="' + (md === 'ur') + '">اردو</button></div><div class="qtools"><button data-fs="-2" aria-label="چھوٹا">A−</button><button data-fs="2" aria-label="بڑا">A+</button><button id="qsync" aria-pressed="' + (store('qsync') !== false) + '">آیت نمایاں</button></div>' + html +
       '<div class="tcredit">' + (who ? 'ترجمہ: ' + who + ' · ' : '') + 'متن و ترجمہ ماخذ: <a href="https://tanzil.net" style="color:var(--accent)">tanzil.net</a>' + (trans && !trans.bundled ? '<button id="tRemove">ہٹائیں</button>' : '') + '</div>';
     hl = { n: player.n, i: -1, w: weights() };
     paintHl(true);
@@ -770,6 +770,8 @@
     if (!audio.paused || force) box.scrollTo({ top: Math.max(0, el.offsetTop - box.offsetTop - 50), behavior: 'smooth' });
   }
   $('#pTrans').addEventListener('click', function (e) {
+    var m = e.target.closest && e.target.closest('[data-md]');
+    if (m) { store('qmode', m.dataset.md); renderTranslation(); $('#pTrans').scrollTop = 0; return; }
     var f = e.target.closest && e.target.closest('[data-fs]');
     if (f) { store('qfs', Math.min(44, Math.max(20, +(store('qfs') || 28) + +f.dataset.fs))); renderTranslation(); return; }
     if (e.target.closest && e.target.closest('#qsync')) { store('qsync', store('qsync') === false); renderTranslation(); }
