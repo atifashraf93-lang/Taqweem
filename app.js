@@ -734,6 +734,8 @@
   function renderTranslation() {
     var box = $('#pTrans'), pl = $('#player');
     pl.classList.toggle('txt', !!transOpen);
+    var curMd = store('qmode') || 'both';
+    $$('#pModes button').forEach(function (b) { b.setAttribute('aria-pressed', String(!!transOpen && b.dataset.md === curMd)); });
     if (!transOpen) { box.hidden = true; return; }
     box.hidden = false;
     if (!trans && !arab) {
@@ -750,7 +752,7 @@
     }
     if (!html) html = '<div class="empty">اس سورت کا متن فائل میں نہیں ملا۔</div>';
     var who = trans ? (trans.maududi ? 'مولانا ابوالاعلیٰ مودودی' : 'درآمد شدہ فائل') : '';
-    box.innerHTML = '<div class="qtools"><button data-md="ar" aria-pressed="' + (md === 'ar') + '">عربی</button><button data-md="both" aria-pressed="' + (md === 'both') + '">عربی + اردو</button><button data-md="ur" aria-pressed="' + (md === 'ur') + '">اردو</button></div><div class="qtools"><button data-fs="-2" aria-label="چھوٹا">A−</button><button data-fs="2" aria-label="بڑا">A+</button><button id="qsync" aria-pressed="' + (store('qsync') !== false) + '">آیت نمایاں</button></div>' + html +
+    box.innerHTML = '<div class="qtools"><button data-fs="-2" aria-label="چھوٹا">A−</button><button data-fs="2" aria-label="بڑا">A+</button><button id="qsync" aria-pressed="' + (store('qsync') !== false) + '">آیت نمایاں</button></div>' + html +
       '<div class="tcredit">' + (who ? 'ترجمہ: ' + who + ' · ' : '') + 'متن و ترجمہ ماخذ: <a href="https://tanzil.net" style="color:var(--accent)">tanzil.net</a>' + (trans && !trans.bundled ? '<button id="tRemove">ہٹائیں</button>' : '') + '</div>';
     hl = { n: player.n, i: -1, w: weights() };
     paintHl(true);
@@ -769,9 +771,13 @@
     el.classList.add('on');
     if (!audio.paused || force) box.scrollTo({ top: Math.max(0, el.offsetTop - box.offsetTop - 50), behavior: 'smooth' });
   }
+  $('#pModes').addEventListener('click', function (e) {
+    var m = e.target.closest('[data-md]'); if (!m) return;
+    store('qmode', m.dataset.md); transOpen = true;
+    $('#pTransBtn').setAttribute('aria-pressed', 'true');
+    renderTranslation(); $('#pTrans').scrollTop = 0;
+  });
   $('#pTrans').addEventListener('click', function (e) {
-    var m = e.target.closest && e.target.closest('[data-md]');
-    if (m) { store('qmode', m.dataset.md); renderTranslation(); $('#pTrans').scrollTop = 0; return; }
     var f = e.target.closest && e.target.closest('[data-fs]');
     if (f) { store('qfs', Math.min(44, Math.max(20, +(store('qfs') || 28) + +f.dataset.fs))); renderTranslation(); return; }
     if (e.target.closest && e.target.closest('#qsync')) { store('qsync', store('qsync') === false); renderTranslation(); }
