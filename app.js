@@ -724,23 +724,61 @@
     return true;
   }
 
+  var arab = null, hl = { n: 0, i: -1, w: null };
+  function stripAr(t) { return String(t).replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, '').replace(/\s+/g, ''); }
+  function weights() {
+    var ay = (arab && arab.map[player.n]) || [], w = [], bis = (player.n !== 1 && player.n !== 9) ? 20 : 0, tot = bis;
+    for (var i = 0; i < ay.length; i++) { var x = stripAr(ay[i] || '').length + 2; w.push(x); tot += x; }
+    return { w: w, bis: bis, tot: tot };
+  }
   function renderTranslation() {
-    var box = $('#pTrans');
+    var box = $('#pTrans'), pl = $('#player');
+    pl.classList.toggle('txt', !!transOpen);
     if (!transOpen) { box.hidden = true; return; }
     box.hidden = false;
-    if (!trans) {
-      box.innerHTML = '<div class="timport"><span>ترجمہ ابھی ایپ میں شامل نہیں۔ tanzil.net/trans سے اردو (Maududi) کی فائل "Text (with Aya Numbers)" فارمیٹ میں ڈاؤنلوڈ کر کے یہاں چنیں۔ فائل صرف اسی ڈیوائس میں محفوظ رہے گی۔</span>' +
+    if (!trans && !arab) {
+      box.innerHTML = '<div class="timport"><span>متن ابھی ایپ میں شامل نہیں۔ tanzil.net/trans سے اردو (Maududi) کی فائل "Text (with Aya Numbers)" فارمیٹ میں ڈاؤنلوڈ کر کے یہاں چنیں۔ فائل صرف آپ کے فون میں رہے گی۔</span>' +
         '<label class="btn" for="tFile">ترجمہ کی فائل چنیں</label><input type="file" id="tFile" accept=".txt,text/plain" hidden></div>';
       return;
     }
-    var lines = trans.map[player.n] || [], html = '';
-    for (var i = 0; i < lines.length; i++) {
-      if (lines[i]) html += '<div class="tv"><span class="n">' + ur(i + 1) + '</span><p>' + escapeHtml(lines[i]) + '</p></div>';
+    var lines = (trans && trans.map[player.n]) || [], ay = (arab && arab.map[player.n]) || [], n = Math.max(lines.length, ay.length), html = '', fs = +(store('qfs') || 28);
+    if (arab && player.n !== 1 && player.n !== 9) html += '<div class="qbis" style="font-size:' + fs + 'px">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>';
+    for (var i = 0; i < n; i++) {
+      if (!lines[i] && !ay[i]) continue;
+      html += '<div class="qa" data-i="' + i + '">' + (ay[i] ? '<div class="qar" style="font-size:' + fs + 'px">' + escapeHtml(ay[i]) + ' <span class="qn">﴿' + ur(i + 1) + '﴾</span></div>' : '<span class="qn">' + ur(i + 1) + '</span>') +
+        (lines[i] ? '<p>' + escapeHtml(lines[i]) + '</p>' : '') + '</div>';
     }
-    if (!html) html = '<div class="empty">اس سورت کا ترجمہ فائل میں نہیں ملا۔</div>';
-    var who = trans.maududi ? 'مولانا ابوالاعلیٰ مودودی' : 'درآمد شدہ فائل';
-    box.innerHTML = html + '<div class="tcredit">ترجمہ: ' + who + ' · ماخذ: tanzil.net<button id="tRemove">ہٹائیں</button></div>';
+    if (!html) html = '<div class="empty">اس سورت کا متن فائل میں نہیں ملا۔</div>';
+    var who = trans ? (trans.maududi ? 'مولانا ابوالاعلیٰ مودودی' : 'درآمد شدہ فائل') : '';
+    box.innerHTML = '<div class="qtools"><button data-fs="-2" aria-label="چھوٹا">A−</button><button data-fs="2" aria-label="بڑا">A+</button><button id="qsync" aria-pressed="' + (store('qsync') !== false) + '">آیت نمایاں</button></div>' + html +
+      '<div class="tcredit">' + (who ? 'ترجمہ: ' + who + ' · ' : '') + 'متن و ترجمہ ماخذ: <a href="https://tanzil.net" style="color:var(--accent)">tanzil.net</a>' + (trans && !trans.bundled ? '<button id="tRemove">ہٹائیں</button>' : '') + '</div>';
+    hl = { n: player.n, i: -1, w: weights() };
+    paintHl(true);
   }
+  function paintHl(force) {
+    if (!transOpen || !arab || store('qsync') === false || !hl.w || hl.n !== player.n) return;
+    var d = audio.duration, c = audio.currentTime;
+    if (!isFinite(d) || d <= 0) return;
+    var pos = c / d * hl.w.tot - hl.w.bis, i = -1, acc = 0;
+    if (pos >= 0) { for (i = 0; i < hl.w.w.length; i++) { acc += hl.w.w[i]; if (pos < acc) break; } if (i >= hl.w.w.length) i = hl.w.w.length - 1; }
+    if (i === hl.i && !force) return;
+    hl.i = i;
+    var box = $('#pTrans'), cur = box.querySelector('.qa.on'); if (cur) cur.classList.remove('on');
+    if (i < 0) return;
+    var el = box.querySelector('.qa[data-i="' + i + '"]'); if (!el) return;
+    el.classList.add('on');
+    if (!audio.paused || force) box.scrollTo({ top: Math.max(0, el.offsetTop - box.offsetTop - 50), behavior: 'smooth' });
+  }
+  $('#pTrans').addEventListener('click', function (e) {
+    var f = e.target.closest && e.target.closest('[data-fs]');
+    if (f) { store('qfs', Math.min(44, Math.max(20, +(store('qfs') || 28) + +f.dataset.fs))); renderTranslation(); return; }
+    if (e.target.closest && e.target.closest('#qsync')) { store('qsync', store('qsync') === false); renderTranslation(); }
+  });
+  audio.addEventListener('timeupdate', function () { paintHl(false); });
+  audio.addEventListener('seeked', function () { paintHl(false); });
+  if (window.fetch) fetch('quran-ar.txt').then(function (r) { return r.ok ? r.text() : ''; }).then(function (raw) {
+    if (!raw) return; var p = Core.parseTanzil(raw); if (p.count > 6000) { arab = p; if (transOpen) renderTranslation(); }
+  }).catch(function () { /* no bundled text */ });
 
   function escapeHtml(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -784,7 +822,7 @@
   }).catch(function () { return false; }).then(function (ok) {
     if (ok || !window.fetch) return;
     return fetch(TRANS_FILE, { cache: 'no-cache' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (raw) {
-      if (raw && loadTranslation(raw)) { kvSet(TRANS_KEY, raw).catch(function () { /* ignore */ }); }
+      if (raw && loadTranslation(raw)) { trans.bundled = true; kvSet(TRANS_KEY, raw).catch(function () { /* ignore */ }); }
     }).catch(function () { /* no bundled file */ });
   });
 

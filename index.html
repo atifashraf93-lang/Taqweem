@@ -316,6 +316,19 @@ html[data-zoom="2"] #app { zoom: 1.22; }
 .nplay span { font-size: 12px; color: var(--muted); min-width: 36px; text-align: center; direction: ltr; }
 .noaudio { font-size: 13px; color: var(--muted); text-align: center; line-height: 2.1; margin-top: 10px; }
 .sadqa{margin:18px 0 8px;padding:12px 14px;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:13px;line-height:2.1}.sadqa .sd-ar{font-family:var(--arabic);font-size:19px;color:var(--accent);line-height:2.2}.sadqa .sd-n{margin-top:4px}
+
+#player.txt .cover { display: none; }
+#player.txt #pTrans { max-height: 46vh; overflow-y: auto; }
+.qbis { text-align: center; font-family: var(--arabic); line-height: 2.2; color: var(--accent); padding: 6px 0; }
+.qa { padding: 8px 10px; margin-top: 6px; border-radius: 14px; border: 1px solid transparent; }
+.qa.on { background: var(--surface-hi); border-color: var(--accent); }
+.qar { font-family: var(--arabic); line-height: 2.3; text-align: right; }
+.qn { color: var(--accent); font-size: .6em; }
+.qa p { margin: 0; font-size: 16px; line-height: 2.2; color: var(--muted); }
+.qa.on p { color: var(--text); }
+.qtools { display: flex; gap: 8px; justify-content: center; position: sticky; top: 0; background: var(--surface); padding: 6px 0; z-index: 1; }
+.qtools button { min-height: 36px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--text); font-size: 14px; }
+.qtools button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 </style>
 </head>
 <body>
