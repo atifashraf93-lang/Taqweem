@@ -7,7 +7,7 @@
   var APP = 'taqweem';
   var VER = '2026.10.26';
   var CONTENT_URL = 'https://raw.githubusercontent.com/atifashraf93-lang/Taqweem/main/content.json';
-  var STATS_URL = ''; /* paste the Apps Script web-app URL here (see SETUP-STATS.md) */
+  var STATS_URL = 'https://script.google.com/macros/s/AKfycbxXg5cacMf8JNUtCZpF9XFnZdNgj3db7SYS6IVxuuTN9KEkzCVkeAAKJ_Y-AcjeDCB0/exec';
 
   function get(k) { try { var v = localStorage.getItem('taqweem.' + k); return v === null ? null : JSON.parse(v); } catch (e) { return null; } }
   function set(k, v) { try { localStorage.setItem('taqweem.' + k, JSON.stringify(v)); } catch (e) { /* storage off */ } }
