@@ -726,8 +726,17 @@
 
   var arab = null, hl = { n: 0, i: -1, w: null };
   function stripAr(t) { return String(t).replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, '').replace(/\s+/g, ''); }
+  function ayText(map, s, a) {
+    var t = (map[s] && map[s][a - 1]) || '';
+    if (a === 1 && s !== 1 && s !== 9) {
+      var w = t.split(/\s+/);
+      if (w.length > 4 && stripAr(w.slice(0, 4).join('')) === stripAr('بسم الله الرحمن الرحيم')) t = w.slice(4).join(' ');
+    }
+    return t;
+  }
+  function ayList(n) { var l = (arab && arab.map[n]) || [], o = []; for (var i = 0; i < l.length; i++) o.push(ayText(arab.map, n, i + 1)); return o; }
   function weights() {
-    var ay = (arab && arab.map[player.n]) || [], w = [], bis = (player.n !== 1 && player.n !== 9) ? 20 : 0, tot = bis;
+    var ay = ayList(player.n), w = [], bis = (player.n !== 1 && player.n !== 9) ? 20 : 0, tot = bis;
     for (var i = 0; i < ay.length; i++) { var x = stripAr(ay[i] || '').length + 2; w.push(x); tot += x; }
     return { w: w, bis: bis, tot: tot };
   }
@@ -743,7 +752,7 @@
         '<label class="btn" for="tFile">ترجمہ کی فائل چنیں</label><input type="file" id="tFile" accept=".txt,text/plain" hidden></div>';
       return;
     }
-    var lines = (trans && trans.map[player.n]) || [], ay = (arab && arab.map[player.n]) || [], n = Math.max(lines.length, ay.length), html = '', fs = +(store('qfs') || 28), md = store('qmode') || 'both';
+    var lines = (trans && trans.map[player.n]) || [], ay = ayList(player.n), n = Math.max(lines.length, ay.length), html = '', fs = +(store('qfs') || 28), md = store('qmode') || 'both';
     if (arab && md !== 'ur' && player.n !== 1 && player.n !== 9) html += '<div class="qbis" style="font-size:' + fs + 'px">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>';
     for (var i = 0; i < n; i++) {
       if (!lines[i] && !ay[i]) continue;
@@ -785,7 +794,7 @@
   audio.addEventListener('timeupdate', function () { paintHl(false); });
   audio.addEventListener('seeked', function () { paintHl(false); });
   if (window.fetch) fetch('quran-ar.txt').then(function (r) { return r.ok ? r.text() : ''; }).then(function (raw) {
-    if (!raw) return; var p = Core.parseTanzil(raw); if (p.count > 6000) { arab = p; if (transOpen) renderTranslation(); }
+    if (!raw) return; var p = Core.parseTanzil(raw); if (p.count > 6000) { arab = p; if (transOpen) renderTranslation(); if (typeof mRender === 'function') mRender(); }
   }).catch(function () { /* no bundled text */ });
 
   function escapeHtml(s) {
@@ -1091,6 +1100,130 @@
   });
   $('#naat').addEventListener('input', function (e) { if (e.target.id === 'nSeek' && naatAudio.duration) naatAudio.currentTime = naatAudio.duration * e.target.value / 100; });
   document.addEventListener('click', function (e) { if (e.target.closest('[data-naat]')) openNaat(); });
+
+  /* ---------- mushaf: 604 pages, 15 lines (Madani layout; page starts from Tanzil data) ---------- */
+  var MP = window.QPAGES || [], QJ = window.QJUZ || [], mCur = Math.min(604, Math.max(1, +store('mpage') || 1)), mTrOn = false;
+  var BISM = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ';
+  function qcmp(x, y) { return x[0] - y[0] || x[1] - y[1]; }
+  function pageOfAyah(s, a) {
+    var lo = 1, hi = 604;
+    while (lo < hi) { var mid = (lo + hi + 1) >> 1; if (qcmp(MP[mid - 1], [s, a]) <= 0) lo = mid; else hi = mid - 1; }
+    return lo;
+  }
+  function juzOf(s, a) { var j = 1; for (var i = 1; i <= 30; i++) { if (qcmp(QJ[i - 1], [s, a]) <= 0) j = i; } return j; }
+  function arDigits(n) { return String(n).replace(/\d/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'[+d]; }); }
+  function mItems(p) {
+    var st = MP[p - 1], en = MP[p], items = [], s = st[0], a = st[1], guard = 0;
+    while (qcmp([s, a], en) < 0 && guard++ < 400) {
+      var cnt = SURAHS[s - 1][2];
+      if (a === 1) { items.push({ t: 'h', s: s }); if (s !== 1 && s !== 9) items.push({ t: 'b' }); }
+      items.push({ t: 'a', s: s, a: a, text: ayText(arab.map, s, a) });
+      a++; if (a > cnt) { s++; a = 1; }
+    }
+    return items;
+  }
+  var mCtx = null;
+  function mWidth(txt, font) { if (!mCtx) mCtx = document.createElement('canvas').getContext('2d'); mCtx.font = font; return mCtx.measureText(txt).width; }
+  function mRender() {
+    var box = $('#mPage'); if ($('#mushaf').hidden) return;
+    if (!arab) { box.innerHTML = '<p class="noaudio" style="margin:auto">متن لوڈ ہو رہا ہے…</p>'; return; }
+    var p = mCur, items = mItems(p), total = p <= 2 ? 8 : 15, words = [], heads = 0, i;
+    items.forEach(function (it) {
+      if (it.t === 'h' || it.t === 'b') heads++;
+      else { it.text.split(/\s+/).filter(Boolean).forEach(function (w) { words.push({ w: w }); }); words.push({ w: arDigits(it.a), n: 1 }); }
+    });
+    var cs = getComputedStyle(box), W = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 4, H = box.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    var fam = getComputedStyle(document.documentElement).getPropertyValue('--arabic') || 'serif', font = '40px ' + fam;
+    var n = Math.max(1, total - heads), sp = mWidth(' ', font) || 8, tot = 0;
+    words.forEach(function (x) { x.px = (x.n ? 44 : mWidth(x.w, font)) + sp; tot += x.px; });
+    n = Math.min(n, words.length);
+    var target = tot / n, lines = [[]], cum = 0, k = 0;
+    words.forEach(function (x) {
+      if (k < n - 1 && lines[k].length && cum + x.px / 2 > (k + 1) * target) { lines.push([]); k++; }
+      lines[k].push(x); cum += x.px;
+    });
+    var maxW = 0; lines.forEach(function (l) { var s = 0; l.forEach(function (x) { s += x.px; }); if (s > maxW) maxW = s; });
+    var rowH = H / total, fs = Math.min(40 * W / (maxW || 1) * 0.96, rowH * 0.78);
+    var rows = [], cumWords = 0;
+    items.forEach(function (it) { if (it.t === 'a') { cumWords += it.text.split(/\s+/).filter(Boolean).length + 1; it.endIdx = cumWords; } });
+    var idx = 0, hdrAt = {}, hq = [];
+    items.forEach(function (it) {
+      if (it.t === 'h' || it.t === 'b') hq.push(it);
+      else { if (hq.length) { hdrAt[idx] = (hdrAt[idx] || []).concat(hq); hq = []; } idx = it.endIdx; }
+    });
+    var pos = 0;
+    lines.forEach(function (l) { rows.push({ start: pos, l: l }); pos += l.length; });
+    // header positions: each header group applies before the word at index = previous ayah end (hdrAt key); attach to the line that starts at or contains that index
+    var out = '', used = {};
+    rows.forEach(function (r) {
+      Object.keys(hdrAt).forEach(function (key) {
+        var kp = +key;
+        if (!used[key] && kp >= r.start && kp < r.start + r.l.length) {
+          used[key] = 1;
+          hdrAt[key].forEach(function (it) { out += it.t === 'h' ? '<div class="mhd" style="height:' + (rowH * .9) + 'px;line-height:' + (rowH * .9) + 'px;font-size:' + (fs * .95) + 'px">سُورَةُ ' + hEsc(SURAHS[it.s - 1][1]) + '</div>' : '<div class="mbis" style="height:' + rowH + 'px;line-height:' + rowH + 'px;font-size:' + (fs * .95) + 'px">' + BISM + '</div>'; });
+        }
+      });
+      out += '<div class="mln" style="height:' + rowH + 'px;line-height:' + rowH + 'px;font-size:' + fs + 'px"><span class="mi">' + r.l.map(function (x) { return x.n ? '<span class="n">' + x.w + '</span>' : hEsc(x.w); }).join(' ') + '</span></div>';
+    });
+    box.innerHTML = out;
+    $$('#mPage .mln').forEach(function (ln) {
+      var sp2 = ln.firstChild, gaps = (sp2.textContent.match(/ /g) || []).length + sp2.querySelectorAll('.n').length * 0, natural = sp2.getBoundingClientRect().width, extra = W - natural;
+      var cnt = sp2.childNodes.length > 1 ? sp2.childNodes.length - 1 : 0, n2 = Math.max(1, (sp2.textContent.split(' ').length - 1));
+      if (extra > 0 && n2 > 0) ln.style.wordSpacing = (extra / n2) + 'px'; else if (extra < 0) ln.style.wordSpacing = Math.max(extra / n2, -3) + 'px';
+    });
+    var f = items.filter(function (it) { return it.t === 'a'; })[0] || { s: MP[p - 1][0], a: MP[p - 1][1] };
+    $('#mJuz').textContent = 'الجزء ' + arDigits(juzOf(f.s, f.a));
+    $('#mSura').textContent = SURAHS[f.s - 1][1];
+    $('#mNo').textContent = ur(p) + ' / ' + ur(604);
+    $('#mPrev').disabled = p <= 1; $('#mNext').disabled = p >= 604;
+    $('#mPrev').style.opacity = p <= 1 ? .4 : 1; $('#mNext').style.opacity = p >= 604 ? .4 : 1;
+    var bms = store('mbm') || []; var on = bms.indexOf(p) >= 0;
+    $('#mBm').textContent = on ? '★' : '☆'; $('#mBm').setAttribute('aria-pressed', String(on));
+    store('mpage', p);
+    if (mTrOn) mTransRender(items);
+  }
+  function mTransRender(items) {
+    var box = $('#mTrans'); box.hidden = !mTrOn; $('#mTr').setAttribute('aria-pressed', String(mTrOn));
+    if (!mTrOn) return;
+    items = items || mItems(mCur);
+    var h = '';
+    items.forEach(function (it) { if (it.t === 'a') { var t = trans && trans.map[it.s] && trans.map[it.s][it.a - 1]; if (t) h += '<p><b>' + ur(it.s) + ':' + ur(it.a) + '</b>' + hEsc(t) + '</p>'; } });
+    box.innerHTML = h || '<p>ترجمہ دستیاب نہیں۔</p>';
+    box.scrollTop = 0;
+  }
+  function mGo(p) { mCur = Math.min(604, Math.max(1, p | 0)); mRender(); }
+  function openMushaf() { $('#mushaf').hidden = false; requestAnimationFrame(mRender); }
+  var mTab = 's';
+  function mSheetRender() {
+    var b = $('#mSheetBody'), h = '';
+    $$('#mSheet [data-mt]').forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.mt === mTab)); });
+    if (mTab === 's') SURAHS.forEach(function (s, i) { h += '<button class="mi" data-mp="' + pageOfAyah(i + 1, 1) + '"><span>' + ur(i + 1) + '. ' + s[0] + '</span><small style="font-family:var(--arabic);font-size:16px;color:var(--accent)">' + s[1] + ' · ' + ur(pageOfAyah(i + 1, 1)) + '</small></button>'; });
+    else if (mTab === 'j') for (var j = 1; j <= 30; j++) h += '<button class="mi" data-mp="' + pageOfAyah(QJ[j - 1][0], QJ[j - 1][1]) + '"><span>پارہ ' + ur(j) + '</span><small>صفحہ ' + ur(pageOfAyah(QJ[j - 1][0], QJ[j - 1][1])) + '</small></button>';
+    else if (mTab === 'p') h = '<input id="mPageIn" type="number" inputmode="numeric" min="1" max="604" placeholder="صفحہ نمبر (1 سے 604)"><button class="btn" id="mPageGo">جائیں</button>';
+    else { var bm = (store('mbm') || []).slice().sort(function (x, y) { return x - y; }); h = bm.length ? bm.map(function (p) { return '<button class="mi" data-mp="' + p + '"><span>صفحہ ' + ur(p) + '</span><small>' + hEsc(SURAHS[MP[p - 1][0] - 1][0]) + '</small></button>'; }).join('') : '<p class="noaudio">ابھی کوئی نشان نہیں۔ صفحے پر ☆ دبائیں۔</p>'; }
+    b.innerHTML = h;
+  }
+  $('#mushaf').addEventListener('click', function (e) {
+    var t = e.target;
+    if (t.closest('#mBack')) { $('#mushaf').hidden = true; return; }
+    if (t.closest('#mNext')) return mGo(mCur + 1);
+    if (t.closest('#mPrev')) return mGo(mCur - 1);
+    if (t.closest('#mBm')) { var b = store('mbm') || [], i = b.indexOf(mCur); if (i >= 0) b.splice(i, 1); else b.push(mCur); store('mbm', b); return mRender(); }
+    if (t.closest('#mTr')) { mTrOn = !mTrOn; return mTransRender(); }
+    if (t.closest('#mIndex')) { $('#mSheet').hidden = false; mSheetRender(); return; }
+    if (t.closest('#mSheetClose') || t === $('#mSheet')) { $('#mSheet').hidden = true; return; }
+    var tab = t.closest('[data-mt]'); if (tab) { mTab = tab.dataset.mt; return mSheetRender(); }
+    var mp = t.closest('[data-mp]'); if (mp) { $('#mSheet').hidden = true; return mGo(+mp.dataset.mp); }
+    if (t.closest('#mPageGo')) { var v = +$('#mPageIn').value; if (v >= 1 && v <= 604) { $('#mSheet').hidden = true; mGo(v); } else toast('صفحہ 1 سے 604 تک'); }
+  });
+  var mX = null;
+  $('#mPage').addEventListener('touchstart', function (e) { mX = e.touches[0].clientX; }, { passive: true });
+  $('#mPage').addEventListener('touchend', function (e) { if (mX === null) return; var dx = e.changedTouches[0].clientX - mX; mX = null; if (Math.abs(dx) > 60) mGo(mCur + (dx > 0 ? 1 : -1)); });
+  document.addEventListener('keydown', function (e) { if ($('#mushaf').hidden) return; if (e.key === 'ArrowLeft') mGo(mCur + 1); else if (e.key === 'ArrowRight') mGo(mCur - 1); });
+  window.addEventListener('resize', function () { mRender(); });
+  document.addEventListener('click', function (e) { if (e.target.closest('[data-mushaf]')) openMushaf(); });
+  window.mTest = { go: mGo, render: mRender };
+
 
   /* ---------- tafseer (streamed from archive.org, needs internet) ---------- */
   var TF_ITEM = 'Tafheem-ul-QuranBySyedAbulAlaMoududi-48kBitss', TF_BASE = 'https://archive.org/download/' + TF_ITEM + '/';

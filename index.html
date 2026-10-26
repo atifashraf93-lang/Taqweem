@@ -334,6 +334,37 @@ html[data-zoom="2"] #app { zoom: 1.22; }
 .pmodes { align-self: stretch; display: flex; gap: 8px; margin-top: 10px; }
 .pmodes button { flex: 1; min-height: 44px; border-radius: 14px; border: 1px solid var(--line); background: transparent; color: var(--text); font-size: 15px; }
 .pmodes button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 600; }
+
+/* mushaf */
+#mushaf { position: absolute; inset: 0; z-index: 26; background: var(--bg); display: flex; flex-direction: column; }
+#mushaf[hidden] { display: none; }
+#mushaf .mtop { display: flex; align-items: center; gap: 8px; padding: max(8px, env(safe-area-inset-top, 0px)) 10px 4px; }
+#mushaf .mtop .back { padding: 0 6px; margin: 0; min-height: 44px; }
+.mt { flex: 1; display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: 13px; color: var(--muted); min-width: 0; }
+.mt b { color: var(--accent); font-family: var(--arabic); font-size: 20px; font-weight: 700; white-space: nowrap; }
+.mbtn { min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--text); font-size: 14px; }
+.mbtn[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+#mPage { flex: 1; min-height: 0; margin: 4px 10px; border: 1px solid var(--line); border-radius: 6px; background: #10302B; box-shadow: inset 0 0 0 4px #10302B, inset 0 0 0 5px var(--line); padding: 12px 10px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; direction: rtl; touch-action: pan-y; }
+.mln { font-family: var(--arabic); text-align: right; white-space: nowrap; overflow: hidden; line-height: 1; color: var(--text); }
+.mln.c { text-align-last: center; }
+.mln .n { display: inline-block; width: 1.7em; height: 1.7em; line-height: 1.65em; font-size: .6em; text-align: center; vertical-align: middle; border: 1px solid var(--accent); border-radius: 50%; color: var(--accent); font-family: var(--arabic); text-justify: none; }
+.mhd { border: 1px solid var(--accent); border-radius: 6px; text-align: center; color: var(--accent); font-family: var(--arabic); font-weight: 700; padding: 2px 0; background: rgba(226, 184, 97, .08); white-space: nowrap; }
+.mbis { text-align: center; font-family: var(--arabic); color: var(--text); white-space: nowrap; }
+.mbot { display: flex; justify-content: space-between; gap: 8px; padding: 6px 10px max(10px, env(safe-area-inset-bottom, 0px)); }
+.mbot .mbtn { flex: 1; }
+#mTrans { position: absolute; left: 10px; right: 10px; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); max-height: 52%; overflow-y: auto; background: var(--surface); border-top: 1px solid var(--accent); border-radius: 18px; padding: 10px 16px; z-index: 2; direction: rtl; }
+#mTrans[hidden], #mSheet[hidden] { display: none; }
+#mTrans p { margin: 0; font-size: 16px; line-height: 2.3; border-bottom: 1px solid var(--line-soft); padding: 4px 0; }
+#mTrans p b { color: var(--accent); font-size: 13px; margin-inline-end: 8px; }
+#mSheet { position: absolute; inset: 0; background: rgba(0, 0, 0, .55); z-index: 3; display: flex; align-items: flex-end; }
+.msp { width: 100%; max-height: 80%; background: var(--surface); border-radius: 18px 18px 0 0; padding: 12px 14px max(14px, env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; direction: rtl; }
+.mtabs { display: flex; gap: 6px; margin-bottom: 8px; }
+.mtabs button { flex: 1; min-height: 40px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--text); font-size: 14px; }
+.mtabs button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+#mSheetBody { overflow-y: auto; flex: 1; min-height: 120px; }
+#mSheetBody .mi { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 8px 6px; min-height: 44px; background: none; border: none; border-bottom: 1px solid var(--line-soft); color: var(--text); font-size: 16px; text-align: right; }
+#mSheetBody .mi small { color: var(--muted); font-size: 12px; }
+#mSheetBody input { width: 100%; min-height: 48px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: 18px; padding: 0 12px; text-align: center; direction: ltr; margin-bottom: 8px; }
 </style>
 </head>
 <body>
@@ -353,7 +384,7 @@ html[data-zoom="2"] #app { zoom: 1.22; }
     <button class="htile" data-go="prayer"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><b>اوقاتِ نماز</b><small>پانچوں نمازیں اور یاد دہانی</small></span></button>
     <button class="htile" data-go="cal"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg><span><b>ہجری تقویم</b><small id="hOcc"></small></span></button>
   </div>
-  <div class="hquick"><button data-go="more" data-open="secMosque">قریبی مساجد</button><button data-hadith>احادیث</button><button data-naat>نعت</button><button data-tf>تفسیر</button><button data-go="more" data-open="secTasbeeh">تسبیح</button><button data-go="more" data-open="secZakat">زکوٰۃ</button></div>
+  <div class="hquick"><button data-go="more" data-open="secMosque">قریبی مساجد</button><button data-hadith>احادیث</button><button data-naat>نعت</button><button data-tf>تفسیر</button><button data-mushaf>قرآن پڑھیں</button><button data-go="more" data-open="secTasbeeh">تسبیح</button><button data-go="more" data-open="secZakat">زکوٰۃ</button></div>
   <div class="credit">Developed by SMAA</div>
   <div class="sadqa"><div class="sd-ar">رَبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا</div><div>اے میرے رب! میرے والدین پر رحم فرما، جیسے انہوں نے بچپن میں مجھے پالا تھا۔</div><div class="sd-n">صدقۂ جاریہ: والد سید سراج الدین اشرف اور والدہ روشن آرا کے لیے<br>اللہ انہیں بخش دے۔ آمین</div></div>
 </section>
@@ -634,6 +665,29 @@ html[data-zoom="2"] #app { zoom: 1.22; }
   <div class="hl" id="tfBody"></div>
 </div>
 
+<div id="mushaf" hidden role="dialog" aria-label="قرآن پڑھیں">
+  <div class="mtop">
+    <button class="back" id="mBack" aria-label="واپس"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+    <div class="mt"><span id="mJuz"></span><b id="mSura"></b><span id="mNo"></span></div>
+    <button class="mbtn" id="mIndex" aria-label="فہرست">فہرست</button>
+  </div>
+  <div id="mPage" aria-live="polite"></div>
+  <div class="mbot">
+    <button class="mbtn" id="mNext">◀ اگلا</button>
+    <button class="mbtn" id="mBm" aria-pressed="false" aria-label="نشان">☆</button>
+    <button class="mbtn" id="mTr" aria-pressed="false">ترجمہ</button>
+    <button class="mbtn" id="mPrev">پچھلا ▶</button>
+  </div>
+  <div id="mTrans" hidden></div>
+  <div id="mSheet" hidden>
+    <div class="msp">
+      <div class="mtabs"><button data-mt="s" aria-pressed="true">سورتیں</button><button data-mt="j" aria-pressed="false">پارے</button><button data-mt="p" aria-pressed="false">صفحہ</button><button data-mt="b" aria-pressed="false">نشان</button></div>
+      <div id="mSheetBody"></div>
+      <button class="btn ghost" id="mSheetClose" style="margin-top:8px">بند کریں</button>
+    </div>
+  </div>
+</div>
+
 <div id="hadith" hidden role="dialog" aria-label="احادیث">
   <button class="back" id="hBack"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>واپس</button>
   <h1 style="margin:0;font-size:22px;line-height:2">احادیثِ مبارکہ <small id="hCount" style="font-size:13px;color:var(--muted)"></small></h1>
@@ -645,6 +699,7 @@ html[data-zoom="2"] #app { zoom: 1.22; }
 <script src="core.js"></script>
 <script src="data.js"></script>
 <script src="hadith.js"></script>
+<script src="qdata.js"></script>
 <script src="naat.js"></script>
 <script src="app.js"></script>
 </body>
