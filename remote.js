@@ -5,12 +5,15 @@
 (function () {
   'use strict';
   var APP = 'taqweem';
+  var PREFIX = 'taqweem.';
+  var FEATURES = true; /* false: only open count, time and version are sent (no feature names) */
+  var FIXED = false; /* true: notices float at the top instead of sitting in #tab-home */
   var VER = '2026.10.26';
   var CONTENT_URL = 'https://raw.githubusercontent.com/atifashraf93-lang/Taqweem/main/content.json';
   var STATS_URL = 'https://script.google.com/macros/s/AKfycbxXg5cacMf8JNUtCZpF9XFnZdNgj3db7SYS6IVxuuTN9KEkzCVkeAAKJ_Y-AcjeDCB0/exec';
 
-  function get(k) { try { var v = localStorage.getItem('taqweem.' + k); return v === null ? null : JSON.parse(v); } catch (e) { return null; } }
-  function set(k, v) { try { localStorage.setItem('taqweem.' + k, JSON.stringify(v)); } catch (e) { /* storage off */ } }
+  function get(k) { try { var v = localStorage.getItem(PREFIX + k); return v === null ? null : JSON.parse(v); } catch (e) { return null; } }
+  function set(k, v) { try { localStorage.setItem(PREFIX + k, JSON.stringify(v)); } catch (e) { /* storage off */ } }
   function $(s) { return document.querySelector(s); }
 
   /* ---------- remote content ---------- */
@@ -18,10 +21,10 @@
 
   function banner(id, text, link, cls) {
     if (!text || seen.indexOf(id) >= 0) return;
-    var host = $('#tab-home'); if (!host) return;
+    var host = FIXED ? ($('#app') || document.body) : $('#tab-home'); if (!host) return;
     var d = document.createElement('div');
     d.setAttribute('role', 'status');
-    d.style.cssText = 'margin:10px 0;padding:12px 14px;border-radius:14px;background:#16352F;border:1px solid #E2B861;color:#F4EFE3;font-size:15px;line-height:1.9;text-align:right;display:flex;gap:10px;align-items:center;justify-content:space-between';
+    d.style.cssText = (FIXED ? 'position:fixed;top:8px;left:12px;right:12px;z-index:60;box-shadow:0 6px 20px rgba(0,0,0,.35);' : '') + 'margin:10px 0;padding:12px 14px;border-radius:14px;background:#16352F;border:1px solid #E2B861;color:#F4EFE3;font-size:15px;line-height:1.9;text-align:right;display:flex;gap:10px;align-items:center;justify-content:space-between';
     var t = document.createElement('div'); t.style.flex = '1';
     t.textContent = text;
     if (link) {
@@ -34,7 +37,7 @@
     x.style.cssText = 'background:none;border:0;color:#A9BDB6;font-size:20px;padding:4px 8px';
     x.onclick = function () { seen.push(id); set('rcseen', seen); d.remove(); };
     d.appendChild(t); d.appendChild(x);
-    host.insertBefore(d, host.firstChild);
+    if (FIXED) host.appendChild(d); else host.insertBefore(d, host.firstChild);
   }
 
   function apply(c) {
@@ -78,7 +81,7 @@
     if (!i) { i = Math.random().toString(36).slice(2, 10) + Date.now().toString(36); set('iid', i); }
     return i;
   }
-  var queue = [];
+  var queue = [], timer = 0;
   var shown = Date.now(), visible = document.visibilityState !== 'hidden';
   function androidVer() { var m = /Android (\d+)/.exec(navigator.userAgent); return m ? m[1] : ''; }
   function tz() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { return ''; } }
@@ -87,6 +90,7 @@
     if (!STATS_URL || !statsOn()) return;
     queue.push({ e: ev, n: n || 1, t: Date.now() });
     if (queue.length >= 15) flush();
+    else if (!timer) timer = setTimeout(function () { timer = 0; flush(); }, 4000);
   }
   function flush() {
     if (!STATS_URL || !statsOn() || !queue.length || navigator.onLine === false) return;
@@ -103,10 +107,11 @@
       visible = false; flush();
     } else { visible = true; shown = Date.now(); track('open'); }
   });
-  setInterval(flush, 60000);
+  setInterval(flush, 30000);
+  window.addEventListener('pagehide', function () { if (visible) track('secs', Math.round((Date.now() - shown) / 1000)); flush(); });
 
   /* feature usage: only the name of the screen/section that was opened */
-  document.addEventListener('click', function (e) {
+  if (FEATURES) document.addEventListener('click', function (e) {
     var t = e.target.closest && e.target.closest('[data-tab],[data-hadith],[data-naat],[data-tf],[data-mushaf],details.sec > summary,[data-go]');
     if (!t) return;
     var name = t.dataset.tab ? 'tab:' + t.dataset.tab :
@@ -127,5 +132,5 @@
     btn.addEventListener('click', function () { set('stats', !statsOn()); if (!statsOn()) queue.length = 0; paint(); });
   }
 
-  window.SMAA = { track: track, version: VER };
+  window.SMAA = { track: track, version: VER, statsOn: statsOn, setStats: function (on) { set('stats', !!on); if (!on) queue.length = 0; } };
 })();
