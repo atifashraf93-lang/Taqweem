@@ -1092,6 +1092,78 @@
   $('#naat').addEventListener('input', function (e) { if (e.target.id === 'nSeek' && naatAudio.duration) naatAudio.currentTime = naatAudio.duration * e.target.value / 100; });
   document.addEventListener('click', function (e) { if (e.target.closest('[data-naat]')) openNaat(); });
 
+  /* ---------- tafseer (streamed from a pCloud public folder, needs internet) ---------- */
+  var TF_CODE = 'kZyk1V7ZjQnChrSq8sQUwttbAwVkEL7QeUb7', TF_HOSTS = ['https://api.pcloud.com', 'https://eapi.pcloud.com'];
+  var tfList = null, tfCur = -1, tfAudio = new Audio(), tfLoading = false;
+  tfAudio.preload = 'none';
+  function tfFlat(m, out) {
+    (m.contents || []).forEach(function (c) {
+      if (c.isfolder) tfFlat(c, out);
+      else if (/\.(mp3|m4a|ogg|wav)$/i.test(c.name || '') || /audio/.test(c.contenttype || '')) out.push({ id: c.fileid, name: c.name.replace(/\.[a-z0-9]+$/i, ''), mb: Math.round((c.size || 0) / 1048576) });
+    });
+    return out;
+  }
+  function tfApi(path) {
+    var i = 0;
+    function go() {
+      return fetch(TF_HOSTS[i] + path).then(function (r) { return r.json(); }).then(function (j) {
+        if (j && j.result === 0) return j;
+        if (++i < TF_HOSTS.length) return go();
+        throw new Error('api ' + (j && j.result));
+      }).catch(function (err) { if (++i < TF_HOSTS.length) return go(); throw err; });
+    }
+    return go();
+  }
+  function tfLoad() {
+    if (tfList || tfLoading) return;
+    tfLoading = true;
+    $('#tfBody').innerHTML = '<p class="noaudio">فہرست لوڈ ہو رہی ہے…</p>';
+    tfApi('/showpublink?code=' + TF_CODE).then(function (j) {
+      var list = tfFlat(j.metadata || {}, []);
+      list.sort(function (x, y) { return x.name.localeCompare(y.name, undefined, { numeric: true }); });
+      if (!list.length) throw new Error('empty');
+      tfList = list; tfPaint();
+    }).catch(function () {
+      $('#tfBody').innerHTML = '<p class="noaudio">فہرست نہیں مل سکی۔ انٹرنیٹ دیکھیں اور دوبارہ کوشش کریں۔</p><button class="btn ghost" id="tfRetry">دوبارہ کوشش</button>';
+    }).then(function () { tfLoading = false; });
+  }
+  function tfPaint() {
+    if (!tfList) return;
+    $('#tfBody').innerHTML = (tfCur >= 0 ? '<div class="nplay"><button id="tfPlay" aria-label="چلائیں">▶</button><span id="tfCurT">0:00</span><input id="tfSeek" type="range" min="0" max="100" value="0" aria-label="آگے پیچھے"><span id="tfDur">0:00</span></div><p class="noaudio" id="tfNow"></p>' : '') +
+      tfList.map(function (t, i) { return '<button class="ncard" data-tfi="' + i + '"' + (i === tfCur ? ' style="border-color:var(--accent)"' : '') + '><b style="direction:ltr;text-align:left">' + hEsc(t.name) + '</b><small>' + (t.mb ? ur(t.mb) + ' MB · ' : '') + 'انٹرنیٹ سے چلے گی</small></button>'; }).join('') +
+      '<p class="hnote">یہ تفسیر انٹرنیٹ سے چلتی ہے اور موبائل ڈیٹا خرچ کرتی ہے۔ آڈیو کا ماخذ خود ایپ کا حصہ نہیں۔</p>';
+    tfTick();
+  }
+  function tfTick() {
+    var b = $('#tfPlay'); if (!b) return;
+    b.textContent = tfAudio.paused ? '▶' : '⏸';
+    $('#tfCurT').textContent = nTime(tfAudio.currentTime); $('#tfDur').textContent = nTime(tfAudio.duration);
+    $('#tfSeek').value = tfAudio.duration ? Math.round(tfAudio.currentTime / tfAudio.duration * 100) : 0;
+  }
+  ['timeupdate', 'play', 'pause', 'loadedmetadata', 'ended'].forEach(function (ev) { tfAudio.addEventListener(ev, tfTick); });
+  tfAudio.addEventListener('play', function () { if (!audio.paused) audio.pause(); if (!naatAudio.paused) naatAudio.pause(); stopClips(); });
+  audio.addEventListener('play', function () { if (!tfAudio.paused) tfAudio.pause(); });
+  naatAudio.addEventListener('play', function () { if (!tfAudio.paused) tfAudio.pause(); });
+  tfAudio.addEventListener('error', function () { if (tfAudio.src) toast('آڈیو نہیں چل سکی'); });
+  tfAudio.addEventListener('ended', function () { if (tfList && tfCur + 1 < tfList.length) tfPlay(tfCur + 1); });
+  function tfPlay(i) {
+    var t = tfList[i]; tfCur = i; tfPaint(); $('#tfNow').textContent = t.name + ' · لوڈ ہو رہی ہے…';
+    tfApi('/getpublinkdownload?code=' + TF_CODE + '&fileid=' + t.id).then(function (j) {
+      tfAudio.src = 'https://' + j.hosts[0] + j.path;
+      var p = tfAudio.play(); if (p && p.catch) p.catch(function () { toast('آڈیو نہیں چل سکی'); });
+      var n = $('#tfNow'); if (n) n.textContent = t.name;
+    }).catch(function () { toast('لنک نہیں مل سکا، انٹرنیٹ دیکھیں'); });
+  }
+  $('#tfBack').addEventListener('click', function () { $('#tafseer').hidden = true; });
+  $('#tafseer').addEventListener('click', function (e) {
+    var t = e.target.closest('[data-tfi]'); if (t) return tfPlay(+t.dataset.tfi);
+    if (e.target.closest('#tfPlay')) { if (tfAudio.paused) tfAudio.play().catch(function () { /* ignore */ }); else tfAudio.pause(); return; }
+    if (e.target.closest('#tfRetry')) tfLoad();
+  });
+  $('#tafseer').addEventListener('input', function (e) { if (e.target.id === 'tfSeek' && tfAudio.duration) tfAudio.currentTime = tfAudio.duration * e.target.value / 100; });
+  document.addEventListener('click', function (e) { if (e.target.closest('[data-tf]')) { $('#tafseer').hidden = false; tfList ? tfPaint() : tfLoad(); } });
+
+
 
   /* ---------- prayer tracker + qaza ---------- */
   var trk = store('trk') || {};

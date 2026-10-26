@@ -298,9 +298,9 @@ html[data-zoom="2"] #app { zoom: 1.22; }
 .hnote { font-size: 12px; color: var(--muted); line-height: 2; margin: 12px 0 0; text-align: center; }
 
 /* naat */
-#naat { position: absolute; inset: 0; z-index: 25; background: var(--bg); display: flex; flex-direction: column; padding: max(12px, env(safe-area-inset-top, 0px)) 16px 0; }
-#naat[hidden] { display: none; }
-#naat .hl { flex: 1; overflow-y: auto; padding-bottom: max(24px, env(safe-area-inset-bottom, 0px)); }
+#tafseer, #naat { position: absolute; inset: 0; z-index: 25; background: var(--bg); display: flex; flex-direction: column; padding: max(12px, env(safe-area-inset-top, 0px)) 16px 0; }
+#naat[hidden], #tafseer[hidden] { display: none; }
+#naat .hl, #tafseer .hl { flex: 1; overflow-y: auto; padding-bottom: max(24px, env(safe-area-inset-bottom, 0px)); }
 .ncard { display: block; width: 100%; text-align: right; margin-top: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 10px 16px; }
 .ncard b { font-size: 17px; font-weight: 600; line-height: 2; display: block; }
 .ncard small { color: var(--muted); font-size: 13px; line-height: 2; }
@@ -353,7 +353,7 @@ html[data-zoom="2"] #app { zoom: 1.22; }
     <button class="htile" data-go="prayer"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><b>اوقاتِ نماز</b><small>پانچوں نمازیں اور یاد دہانی</small></span></button>
     <button class="htile" data-go="cal"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg><span><b>ہجری تقویم</b><small id="hOcc"></small></span></button>
   </div>
-  <div class="hquick"><button data-go="more" data-open="secMosque">قریبی مساجد</button><button data-hadith>احادیث</button><button data-naat>نعت</button><button data-go="more" data-open="secTasbeeh">تسبیح</button><button data-go="more" data-open="secZakat">زکوٰۃ</button></div>
+  <div class="hquick"><button data-go="more" data-open="secMosque">قریبی مساجد</button><button data-hadith>احادیث</button><button data-naat>نعت</button><button data-tf>تفسیر</button><button data-go="more" data-open="secTasbeeh">تسبیح</button><button data-go="more" data-open="secZakat">زکوٰۃ</button></div>
   <div class="credit">Developed by SMAA</div>
   <div class="sadqa"><div class="sd-ar">رَبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا</div><div>اے میرے رب! میرے والدین پر رحم فرما، جیسے انہوں نے بچپن میں مجھے پالا تھا۔</div><div class="sd-n">صدقۂ جاریہ: والد سید سراج الدین اشرف اور والدہ روشن آرا کے لیے<br>اللہ انہیں بخش دے۔ آمین</div></div>
 </section>
@@ -626,6 +626,12 @@ html[data-zoom="2"] #app { zoom: 1.22; }
   <button class="back" id="nBack"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>واپس</button>
   <h1 id="nTitle" style="margin:0;font-size:22px;line-height:2">نعت و سلام</h1>
   <div class="hl" id="nBody"></div>
+</div>
+
+<div id="tafseer" hidden role="dialog" aria-label="تفسیر">
+  <button class="back" id="tfBack"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>واپس</button>
+  <h1 id="tfTitle" style="margin:0;font-size:22px;line-height:2">تفسیر · تفہیم القرآن</h1>
+  <div class="hl" id="tfBody"></div>
 </div>
 
 <div id="hadith" hidden role="dialog" aria-label="احادیث">
