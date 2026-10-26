@@ -1,22 +1,29 @@
 // Google Apps Script: receives anonymous counts from the SMAA apps and stores them in a Google Sheet.
 // Tab "events" holds one row per event. Opening the web-app URL with ?key=<KEY> shows the dashboard.
 var SHEET = 'events';
-var KEY = 'CHANGE-THIS-TO-A-SECRET-WORD'; // dashboard link ends with ?key=<this word>
+var KEY = 'ATIF4321'; // dashboard link ends with ?key=<this word>
 function sh_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var s = ss.getSheetByName(SHEET) || ss.insertSheet(SHEET);
   if (s.getLastRow() === 0) s.appendRow(['time', 'app', 'ver', 'install', 'tz', 'lang', 'android', 'event', 'n']);
   return s;
 }
-function doPost(e) {
+function log_(msg) {
   try {
-    var d = JSON.parse(e.postData.contents), rows = [], now = new Date();
-    (d.ev || []).slice(0, 50).forEach(function (x) {
-      rows.push([now, String(d.a || '').slice(0, 20), String(d.v || '').slice(0, 12), String(d.i || '').slice(0, 24),
-        String(d.z || '').slice(0, 40), String(d.l || '').slice(0, 8), String(d.o || '').slice(0, 4), String(x.e || '').slice(0, 40), Number(x.n) || 1]);
-    });
-    if (rows.length) { var s = sh_(); s.getRange(s.getLastRow() + 1, 1, rows.length, 9).setValues(rows); }
+    var ss = SpreadsheetApp.getActiveSpreadsheet(), l = ss.getSheetByName('log') || ss.insertSheet('log');
+    l.appendRow([new Date(), String(msg).slice(0, 300)]);
   } catch (err) {}
+}
+function record_(d) {
+  var rows = [], now = new Date();
+  (d.ev || []).slice(0, 50).forEach(function (x) {
+    rows.push([now, String(d.a || '').slice(0, 20), String(d.v || '').slice(0, 12), String(d.i || '').slice(0, 24),
+      String(d.z || '').slice(0, 40), String(d.l || '').slice(0, 8), String(d.o || '').slice(0, 4), String(x.e || '').slice(0, 40), Number(x.n) || 1]);
+  });
+  if (rows.length) { var s = sh_(); s.getRange(s.getLastRow() + 1, 1, rows.length, 9).setValues(rows); }
+}
+function doPost(e) {
+  try { record_(JSON.parse(e.postData.contents)); } catch (err) { log_('doPost ' + err); }
   return ContentService.createTextOutput('ok');
 }
 function getStats() {
@@ -44,6 +51,10 @@ function getStats() {
   return out;
 }
 function doGet(e) {
+  if (e && e.parameter && e.parameter.d) {
+    try { record_(JSON.parse(e.parameter.d)); } catch (err) { log_('doGet ' + err); }
+    return ContentService.createTextOutput('ok');
+  }
   if (!e || !e.parameter || e.parameter.key !== KEY) return ContentService.createTextOutput('Not allowed');
   return HtmlService.createHtmlOutputFromFile('Dashboard').setTitle('SMAA Stats').addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }

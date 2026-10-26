@@ -93,11 +93,12 @@
     else if (!timer) timer = setTimeout(function () { timer = 0; flush(); }, 4000);
   }
   function flush() {
-    if (!STATS_URL || !statsOn() || !queue.length || navigator.onLine === false) return;
-    var body = JSON.stringify({ a: APP, v: VER, i: iid(), z: tz(), l: (navigator.language || '').slice(0, 5), o: androidVer(), ev: queue.splice(0, queue.length) });
-    try {
-      fetch(STATS_URL, { method: 'POST', body: body, headers: { 'Content-Type': 'text/plain;charset=utf-8' }, keepalive: true, mode: 'no-cors' }).catch(function () { /* ignore */ });
-    } catch (e) { /* ignore */ }
+    if (!STATS_URL || !statsOn() || !queue.length) return;
+    var n = 0;
+    while (queue.length && n++ < 5) {
+      var body = JSON.stringify({ a: APP, v: VER, i: iid(), z: tz(), l: (navigator.language || '').slice(0, 5), o: androidVer(), ev: queue.splice(0, 8) });
+      try { var img = new Image(); img.src = STATS_URL + '?d=' + encodeURIComponent(body) + '&r=' + Math.random().toString(36).slice(2, 6); } catch (e) { /* ignore */ }
+    }
   }
 
   track('open');
