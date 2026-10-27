@@ -340,13 +340,14 @@
     if (!LN.createChannel) return Promise.resolve();
     return Promise.all([
       LN.createChannel({ id: 'azan', name: 'اذان', description: 'نماز کے وقت اذان کی آواز', importance: 5, sound: 'azan_notify.mp3', vibration: true, visibility: 1 }),
+      LN.createChannel({ id: 'prayerchk', name: 'کیا نماز پڑھ لی؟', description: 'نماز کا وقت ختم ہونے سے پہلے یاد دہانی', importance: 5, vibration: true, visibility: 1 }),
       LN.createChannel({ id: 'prayer', name: 'نماز کی یاد دہانی', description: 'نماز کے وقت ہلکی یاد دہانی', importance: 4, vibration: true, visibility: 1 })
     ]).catch(function () { /* channels unavailable */ });
   }
 
   function scheduleReminders() {
     var LN = nativeLN();
-    if (!LN || (!store('rem') && !store('fastrem'))) return Promise.resolve();
+    if (!LN || (!store('rem') && !store('fastrem') && !store('chk'))) return Promise.resolve();
     var now = new Date(), list = [];
     for (var d = 0; store('rem') && d < 14; d++) {
       var date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d);
@@ -359,6 +360,7 @@
       });
     }
     if (store('fastrem')) list = list.concat(fastReminderList());
+    if (store('chk')) list = list.concat(chkList());
     return ensureChannels(LN).then(function () { return clearReminders(LN); })
       .then(function () { return list.length ? LN.schedule({ notifications: list }) : null; })
       .catch(function () { /* reminders unavailable */ });
@@ -1293,6 +1295,14 @@
     var n = new Date();
     $('#trkStreak').textContent = ur(Core.computeStreak(trk, n.getFullYear(), n.getMonth() + 1, n.getDate()));
     $('#qazaVal').textContent = ur(qaza);
+    var wk = '', tot = 0;
+    for (var w = 6; w >= 0; w--) {
+      var dd = new Date(n.getFullYear(), n.getMonth(), n.getDate() - w), m2 = trk[Core.dateKey(dd.getFullYear(), dd.getMonth() + 1, dd.getDate())] || 0, c = 0;
+      for (var b2 = 0; b2 < 5; b2++) if (m2 & (1 << b2)) c++;
+      tot += c;
+      wk += '<div><i><u style="height:' + (c * 20) + '%"></u></i>' + Data.WEEKDAYS[dd.getDay()] + '</div>';
+    }
+    $('#trkWeek').innerHTML = wk; $('#trkWk').textContent = ur(tot) + ' / ' + ur(35);
   }
   $('#trkBtns').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-i]'); if (!b) return;
@@ -1301,6 +1311,7 @@
     var keys = Object.keys(trk).sort();
     while (keys.length > 120) delete trk[keys.shift()];
     store('trk', trk); paintTrk();
+    if (trk[k] & (1 << +b.dataset.i)) cancelChk(+b.dataset.i, new Date());
   });
   $('#qazaPlus').addEventListener('click', function () { qaza++; store('qaza', qaza); paintTrk(); });
   $('#qazaMinus').addEventListener('click', function () { qaza = Math.max(0, qaza - 1); store('qaza', qaza); paintTrk(); });
@@ -1434,6 +1445,188 @@
     if (g.dataset.open) { var d = document.getElementById(g.dataset.open); if (d) { d.open = true; d.scrollIntoView(); } }
   });
 
+
+  /* ---------- masnoon duain ---------- */
+  var DU = window.DUAS || [], DCATS = window.DUAS_CATS || {}, dst = { cat: 'all', q: '' }, dfav = store('dfav') || [];
+  function duaBody(d) {
+    if (!d[4]) return { ar: d[1], ur: d[2] };
+    var q = d[4], ar = [], tr = [], i;
+    for (i = q[1]; i <= q[2]; i++) {
+      if (arab) ar.push(ayText(arab.map, q[0], i));
+      if (trans && trans.map[q[0]] && trans.map[q[0]][i - 1]) tr.push(trans.map[q[0]][i - 1]);
+    }
+    return { ar: ar.join(' ') || 'متن لوڈ ہو رہا ہے…', ur: tr.join(' ') };
+  }
+  function duaShareText(d) { var b = duaBody(d); return b.ar + '\n\n' + b.ur + '\n\n— ' + d[3] + '\n(تقویم، Developed by SMAA)'; }
+  function paintDuas() {
+    var cats = Object.keys(DCATS).concat(['fav']);
+    $('#dTopics').innerHTML = cats.map(function (k) {
+      return '<button data-dt="' + k + '" aria-pressed="' + (dst.cat === k) + '">' + (k === 'fav' ? 'پسندیدہ' : DCATS[k]) + '</button>';
+    }).join('');
+    var q = dst.q.trim(), out = [];
+    DU.forEach(function (d, i) {
+      if (dst.cat === 'fav' ? dfav.indexOf(i) < 0 : (dst.cat !== 'all' && d[0] !== dst.cat)) return;
+      var b = duaBody(d);
+      if (q && (b.ar + ' ' + b.ur + ' ' + d[3]).indexOf(q) < 0) return;
+      out.push('<div class="hcard dcard"><div class="ht"><span>' + hEsc(DCATS[d[0]] || '') + '</span></div><div class="har">' + hEsc(b.ar) + '</div><div class="hur">' + hEsc(b.ur) + '</div><div class="hs">' + hEsc(d[3]) + '</div>' +
+        '<div class="hact"><button data-dcopy="' + i + '">نقل کریں</button><button data-dshare="' + i + '">شیئر</button><button data-dfav="' + i + '" aria-pressed="' + (dfav.indexOf(i) >= 0) + '">پسندیدہ</button></div></div>');
+    });
+    $('#dCount').textContent = '(' + ur(out.length) + ')';
+    $('#dList').innerHTML = out.join('') || '<p class="hnote">کوئی دعا نہیں ملی۔</p>';
+  }
+  function openDuas() { dst = { cat: 'all', q: '' }; $('#dSearch').value = ''; $('#duas').hidden = false; paintDuas(); $('#dList').scrollTop = 0; }
+  $('#dBack').addEventListener('click', function () { $('#duas').hidden = true; });
+  $('#dSearch').addEventListener('input', function () { dst.q = this.value; paintDuas(); });
+  $('#duas').addEventListener('click', function (e) {
+    var t = e.target.closest('[data-dt]');
+    if (t) { dst.cat = t.dataset.dt; paintDuas(); return; }
+    t = e.target.closest('[data-dfav]');
+    if (t) { var i = +t.dataset.dfav, p = dfav.indexOf(i); if (p >= 0) dfav.splice(p, 1); else dfav.push(i); store('dfav', dfav); paintDuas(); return; }
+    t = e.target.closest('[data-dcopy]');
+    if (t) { var tx = duaShareText(DU[+t.dataset.dcopy]); if (navigator.clipboard) navigator.clipboard.writeText(tx).then(function () { toast('نقل کر لی گئی'); }).catch(function () { toast('نقل نہیں ہو سکی'); }); return; }
+    t = e.target.closest('[data-dshare]');
+    if (t) {
+      var text = duaShareText(DU[+t.dataset.dshare]);
+      if (navigator.share) navigator.share({ text: text }).catch(function () { /* cancelled */ });
+      else if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { toast('نقل کر لی گئی'); }).catch(function () { toast('شیئر نہیں ہو سکا'); });
+    }
+  });
+  document.addEventListener('click', function (e) { if (e.target.closest('[data-duas]')) openDuas(); });
+
+  /* ---------- after-prayer adhkar ---------- */
+  var AS = window.AFTER_SALAH || [], asCount = [];
+  function openAfterSalah() {
+    asCount = AS.map(function () { return 0; });
+    $('#aList').innerHTML = AS.map(function (d, i) {
+      var b = duaBody([0, d[0], d[1], d[3], d[4]]);
+      return '<div class="hcard"><div class="har">' + hEsc(b.ar) + '</div><div class="hur">' + hEsc(b.ur) + '</div><div class="hs">' + hEsc(d[3]) + '</div>' +
+        (d[2] > 1 ? '<button class="acount" data-ai="' + i + '" data-done="0">' + ur(0) + ' / ' + ur(d[2]) + '</button>' : '') + '</div>';
+    }).join('') + '<p class="hnote">اللہ قبول فرمائے۔</p>';
+    $('#asalah').hidden = false; $('#aList').scrollTop = 0;
+  }
+  $('#aBack').addEventListener('click', function () { $('#asalah').hidden = true; });
+  $('#aList').addEventListener('click', function (e) {
+    var t = e.target.closest('[data-ai]'); if (!t) return;
+    var i = +t.dataset.ai, max = AS[i][2];
+    if (asCount[i] < max) asCount[i]++;
+    t.textContent = ur(asCount[i]) + ' / ' + ur(max);
+    if (asCount[i] >= max) { t.dataset.done = '1'; t.textContent += ' ✓'; }
+    try { if (navigator.vibrate) navigator.vibrate(asCount[i] >= max ? 60 : 10); } catch (x) { /* ignore */ }
+  });
+
+  /* ---------- "did you pray?" check-in before each prayer time ends ---------- */
+  function chkMin() { var m = +store('chkmin'); return m >= 5 ? m : 30; }
+  function prayerWindow(i, date) {
+    var t = dayTimes(date); if (!t) return null;
+    var k = REM_KEYS[i], end;
+    if (k === 'fajr') end = t.sunrise;
+    else if (k === 'dhuhr') end = t.asr;
+    else if (k === 'asr') end = t.maghrib;
+    else if (k === 'maghrib') end = t.isha;
+    else { var nx = dayTimes(new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1)); if (!nx) return null; end = new Date((t.maghrib.getTime() + nx.fajr.getTime()) / 2); }
+    var start = t[k], at = new Date(end.getTime() - chkMin() * 60000);
+    if (at.getTime() < start.getTime() + 10 * 60000) at = new Date(start.getTime() + 10 * 60000);
+    return { start: start, end: end, at: at };
+  }
+  function dkOf(date) { return Core.dateKey(date.getFullYear(), date.getMonth() + 1, date.getDate()); }
+  function chkId(i, date) { return 2000 + (Core.dayNumOf(date.getFullYear(), date.getMonth() + 1, date.getDate()) % 100) * 10 + i; }
+  function leftText(ms) { var m = Math.max(1, Math.round(ms / 60000)); return m >= 60 ? ur(Math.floor(m / 60)) + ' گھنٹے ' + (m % 60 ? ur(m % 60) + ' منٹ' : '') : ur(m) + ' منٹ'; }
+
+  function chkList() {
+    var now = new Date(), list = [];
+    for (var d = 0; d < 7; d++) {
+      var date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d), dk = dkOf(date);
+      REM_KEYS.forEach(function (k, i) {
+        var w = prayerWindow(i, date);
+        if (!w || w.at <= now) return;
+        if (d === 0 && (trk[dk] || 0) & (1 << i)) return;
+        list.push({ id: chkId(i, date), title: 'کیا آپ نے ' + prayerLabel(k, w.start) + ' کی نماز ادا کر لی؟', body: 'وقت ختم ہونے میں تقریباً ' + leftText(w.end - w.at) + ' باقی ہیں', channelId: 'prayerchk', actionTypeId: 'PRAYERCHK', extra: { k: i, dk: dk }, schedule: { at: w.at, allowWhileIdle: true } });
+      });
+    }
+    return list;
+  }
+  function cancelChk(i, date) {
+    var LN = nativeLN(); if (!LN) return;
+    try { LN.cancel({ notifications: [{ id: chkId(i, date) }, { id: 4000 + i }] }).catch(function () { /* ignore */ }); } catch (e) { /* ignore */ }
+  }
+  var chkSnooze = {}, chkDismiss = {}, chkNow = null, chkCount = {};
+  function markPrayer(i, dk) {
+    trk[dk] = (trk[dk] || 0) | (1 << i);
+    var keys = Object.keys(trk).sort();
+    while (keys.length > 120) delete trk[keys.shift()];
+    store('trk', trk); paintTrk();
+    var p = dk.split('-'); cancelChk(i, new Date(+p[0], +p[1] - 1, +p[2]));
+  }
+  function snoozeChk(i, dk, minutes) {
+    var p = dk.split('-'), date = new Date(+p[0], +p[1] - 1, +p[2]), w = prayerWindow(i, date), key = dk + '#' + i, now = Date.now();
+    chkCount[key] = (chkCount[key] || 0) + 1;
+    var at = now + minutes * 60000;
+    if (!w || chkCount[key] > 3 || at > w.end.getTime() - 3 * 60000) { chkSnooze[key] = Infinity; toast('اللہ توفیق دے'); return; }
+    chkSnooze[key] = at;
+    toast(ur(minutes) + ' منٹ بعد دوبارہ یاد دلاؤں گا');
+    var LN = nativeLN();
+    if (LN) LN.schedule({ notifications: [{ id: 4000 + i, title: 'کیا آپ نے ' + prayerLabel(REM_KEYS[i], w.start) + ' کی نماز ادا کر لی؟', body: 'وقت ختم ہونے میں ' + leftText(w.end.getTime() - at) + ' باقی ہیں', channelId: 'prayerchk', actionTypeId: 'PRAYERCHK', extra: { k: i, dk: dk }, schedule: { at: new Date(at), allowWhileIdle: true } }] }).catch(function () { /* ignore */ });
+  }
+  function showChk(i, dk) {
+    var p = dk.split('-'), date = new Date(+p[0], +p[1] - 1, +p[2]), w = prayerWindow(i, date); if (!w) return;
+    chkNow = { i: i, dk: dk };
+    $('#chkT').textContent = 'کیا آپ نے ' + prayerLabel(REM_KEYS[i], w.start) + ' کی نماز ادا کر لی؟';
+    var left = w.end.getTime() - Date.now(), c = clock(w.end);
+    $('#chkS').textContent = (left > 0 ? 'وقت ختم ہونے میں ' + leftText(left) + ' باقی ہیں' : 'وقت ختم ہو چکا ہے') + ' (' + c.t + ' ' + c.p + ')';
+    $('#chk').hidden = false;
+  }
+  function checkDue() {
+    if (!store('chk') || !$('#chk').hidden) return;
+    var now = new Date(), dk = dkOf(now), hit = -1;
+    REM_KEYS.forEach(function (k, i) {
+      var w = prayerWindow(i, now), key = dk + '#' + i;
+      if (!w || (trk[dk] || 0) & (1 << i) || chkDismiss[key]) return;
+      if (now >= w.at && now < w.end && (chkSnooze[key] || 0) <= now.getTime()) hit = i;
+    });
+    if (hit >= 0) showChk(hit, dk);
+  }
+  function chkAnswer(act) {
+    var c = chkNow; $('#chk').hidden = true; if (!c) return;
+    if (act === 'yes') {
+      markPrayer(c.i, c.dk); toast('ماشاء اللہ، اللہ قبول فرمائے');
+      if (store('chkad') !== false) openAfterSalah();
+    } else if (act === 'no') snoozeChk(c.i, c.dk, 20);
+    else if (act === 'later') snoozeChk(c.i, c.dk, 10);
+    else chkDismiss[c.dk + '#' + c.i] = true;
+    chkNow = null;
+  }
+  $('#chkYes').addEventListener('click', function () { chkAnswer('yes'); });
+  $('#chkNo').addEventListener('click', function () { chkAnswer('no'); });
+  $('#chkLater').addEventListener('click', function () { chkAnswer('later'); });
+  $('#chkClose').addEventListener('click', function () { chkAnswer('close'); });
+  setInterval(checkDue, 30000);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') setTimeout(checkDue, 500); });
+
+  function setupChk() {
+    var LN = nativeLN(), btn = $('#chkBtn'), sel = $('#chkMin'), ad = $('#chkAdhkar');
+    function paint() { var on = !!store('chk'); btn.setAttribute('aria-pressed', String(on)); btn.textContent = on ? 'چالو' : 'بند'; sel.value = String(chkMin()); var a = store('chkad') !== false; ad.setAttribute('aria-pressed', String(a)); ad.textContent = a ? 'آن' : 'بند'; }
+    $('#chkRow').hidden = false; paint();
+    btn.addEventListener('click', function () {
+      if (store('chk')) { store('chk', false); paint(); scheduleReminders(); toast('یاد دہانی بند کر دی'); return; }
+      function on() { store('chk', true); paint(); scheduleReminders(); toast('وقت ختم ہونے سے پہلے پوچھوں گا'); checkDue(); }
+      if (!LN) return on();
+      LN.requestPermissions().then(function (r) { if (r && r.display === 'granted') on(); else { store('chk', true); paint(); toast('نوٹیفکیشن کی اجازت نہیں ملی، صرف ایپ کھلنے پر پوچھوں گا'); } }).catch(function () { toast('چالو نہیں ہو سکا'); });
+    });
+    sel.addEventListener('change', function () { store('chkmin', +sel.value); scheduleReminders(); });
+    ad.addEventListener('click', function () { store('chkad', store('chkad') === false); paint(); });
+    if (LN && LN.registerActionTypes) {
+      LN.registerActionTypes({ types: [{ id: 'PRAYERCHK', actions: [{ id: 'yes', title: 'جی ادا کر لی' }, { id: 'no', title: 'ابھی نہیں' }, { id: 'later', title: '10 منٹ بعد' }] }] }).catch(function () { /* ignore */ });
+      LN.addListener('localNotificationActionPerformed', function (ev) {
+        var ex = ev && ev.notification && ev.notification.extra; if (!ex || ex.k == null || !ex.dk) return;
+        if (ev.actionId === 'yes') { markPrayer(+ex.k, ex.dk); toast('ماشاء اللہ، اللہ قبول فرمائے'); if (store('chkad') !== false) openAfterSalah(); }
+        else if (ev.actionId === 'no') snoozeChk(+ex.k, ex.dk, 20);
+        else if (ev.actionId === 'later') snoozeChk(+ex.k, ex.dk, 10);
+        else if (!((trk[ex.dk] || 0) & (1 << +ex.k))) showChk(+ex.k, ex.dk);
+      });
+    }
+  }
+  window.chkTest = { prayerWindow: prayerWindow, showChk: showChk, checkDue: checkDue, openAfterSalah: openAfterSalah, openDuas: openDuas, chkList: chkList };
+
   /* ---------- start ---------- */
   var last = store('last');
   if (last && last >= 1 && last <= 114) $('#playFirstTxt').textContent = 'سورۃ ' + SURAHS[last - 1][0] + ' سے جاری رکھیں';
@@ -1442,6 +1635,7 @@
   initCompass();
   setupReminders();
   setupFastReminders();
+  setupChk();
   setupAzan();
   applyLook();
   renderFavChips();
@@ -1449,6 +1643,7 @@
   showTab('home');
   if (state.loc.src === 'default') locate(true);
 
+  setTimeout(checkDue, 2600);
   setTimeout(function () {
     var s = $('#splash');
     s.classList.add('gone');

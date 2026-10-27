@@ -298,6 +298,27 @@ html[data-zoom="2"] #app { zoom: 1.22; }
 .hnote { font-size: 12px; color: var(--muted); line-height: 2; margin: 12px 0 0; text-align: center; }
 
 /* naat */
+
+#duas, #asalah { position: absolute; inset: 0; z-index: 25; background: var(--bg); display: flex; flex-direction: column; padding: max(12px, env(safe-area-inset-top, 0px)) 16px 0; }
+#duas[hidden], #asalah[hidden] { display: none; }
+#duas .hl, #asalah .hl { flex: 1; overflow-y: auto; padding-bottom: max(24px, env(safe-area-inset-bottom, 0px)); }
+.dcard .hur { font-size: 15px; color: var(--muted); }
+.acount { display: block; width: 100%; margin-top: 8px; min-height: 52px; border-radius: 16px; border: 1px solid var(--accent); background: var(--bg-deep); color: var(--accent); font-size: 18px; line-height: 2; }
+.acount[data-done="1"] { background: var(--accent); color: var(--bg-deep); }
+#chk { position: absolute; inset: 0; z-index: 60; background: radial-gradient(circle at 50% 18%, var(--surface-hi), var(--bg) 62%); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 28px; padding-top: max(28px, env(safe-area-inset-top, 0px)); padding-bottom: max(28px, env(safe-area-inset-bottom, 0px)); }
+#chk[hidden] { display: none; }
+#chk .cic { width: 92px; height: 92px; border-radius: 50%; border: 3px solid var(--accent); display: flex; align-items: center; justify-content: center; color: var(--accent); margin-bottom: 18px; }
+#chk h2 { margin: 0; font-size: 28px; line-height: 1.9; color: var(--accent); }
+#chk p { margin: 4px 0 0; font-size: 17px; line-height: 2; color: var(--muted); }
+#chk .cb { width: 100%; max-width: 360px; min-height: 56px; border-radius: 18px; margin-top: 14px; font-size: 20px; font-weight: 700; border: 2px solid var(--line); background: var(--surface); line-height: 2; }
+#chk .cb.yes { background: var(--accent); border-color: var(--accent); color: var(--bg-deep); margin-top: 30px; }
+#chk .cb.soft { border: 0; background: none; color: var(--muted); font-size: 17px; font-weight: 400; }
+.wkbars { display: flex; gap: 6px; justify-content: center; margin: 10px 0 2px; direction: ltr; }
+.wkbars div { width: 38px; text-align: center; font-size: 12px; color: var(--muted); }
+.wkbars i { display: block; height: 70px; border-radius: 8px; background: var(--bg-deep); position: relative; overflow: hidden; margin-bottom: 4px; }
+.wkbars u { position: absolute; left: 0; right: 0; bottom: 0; background: var(--accent); }
+.cfgrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; font-size: 15px; line-height: 2; }
+.cfgrow select { background: var(--surface-hi); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; font-size: 15px; }
 #tafseer, #naat { position: absolute; inset: 0; z-index: 25; background: var(--bg); display: flex; flex-direction: column; padding: max(12px, env(safe-area-inset-top, 0px)) 16px 0; }
 #naat[hidden], #tafseer[hidden] { display: none; }
 #naat .hl, #tafseer .hl { flex: 1; overflow-y: auto; padding-bottom: max(24px, env(safe-area-inset-bottom, 0px)); }
@@ -384,7 +405,7 @@ html[data-zoom="2"] #app { zoom: 1.22; }
     <button class="htile" data-go="prayer"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><b>اوقاتِ نماز</b><small>پانچوں نمازیں اور یاد دہانی</small></span></button>
     <button class="htile" data-go="cal"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg><span><b>ہجری تقویم</b><small id="hOcc"></small></span></button>
   </div>
-  <div class="hquick"><button data-go="more" data-open="secMosque">قریبی مساجد</button><button data-hadith>احادیث</button><button data-naat>نعت</button><button data-tf>تفسیر</button><button data-mushaf>قرآن پڑھیں</button><button data-go="more" data-open="secTasbeeh">تسبیح</button><button data-go="more" data-open="secZakat">زکوٰۃ</button></div>
+  <div class="hquick"><button data-go="more" data-open="secMosque">قریبی مساجد</button><button data-hadith>احادیث</button><button data-naat>نعت</button><button data-duas>مسنون دعائیں</button><button data-tf>تفسیر</button><button data-mushaf>قرآن پڑھیں</button><button data-go="more" data-open="secTasbeeh">تسبیح</button><button data-go="more" data-open="secZakat">زکوٰۃ</button></div>
   <div class="credit">Developed by SMAA</div>
   <div class="sadqa"><div class="sd-ar">رَبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا</div><div>اے میرے رب! میرے والدین پر رحم فرما، جیسے انہوں نے بچپن میں مجھے پالا تھا۔</div><div class="sd-n">صدقۂ جاریہ: والد سید سراج الدین اشرف اور والدہ روشن آرا کے لیے<br>اللہ انہیں بخش دے۔ آمین</div></div>
 </section>
@@ -526,6 +547,8 @@ html[data-zoom="2"] #app { zoom: 1.22; }
   <details class="sec"><summary>نماز ٹریکر اور قضا</summary><div class="body">
     <p class="sub">آج کی ادا کی ہوئی نمازیں چنیں</p>
     <div class="trk" id="trkBtns"></div>
+    <div class="wkbars" id="trkWeek" aria-hidden="true"></div>
+    <div class="row2"><span>اس ہفتے کی نمازیں</span><b id="trkWk">۰</b></div>
     <div class="row2"><span>لگاتار مکمل دن</span><b id="trkStreak">۰</b></div>
     <div class="row2"><span>باقی قضا نمازیں</span>
       <span class="ctl" style="display:flex;align-items:center;gap:8px">
@@ -544,6 +567,13 @@ html[data-zoom="2"] #app { zoom: 1.22; }
     <div class="fld"><span>آج چاندی کا ریٹ فی گرام</span><input id="zSP" inputmode="decimal" placeholder="0"></div>
     <div class="zres" id="zRes">ریٹ اور رقوم درج کریں۔</div>
     <p class="hint">نصاب ساڑھے باون تولہ چاندی (۶۱۲.۳۶ گرام) کے برابر مال ہے، شرح ۲.۵٪۔ ریٹ آپ خود لکھیں گے۔ حتمی مسئلہ کسی عالم سے پوچھ لیں۔</p>
+  </div></details>
+
+  <details class="sec" id="secChk"><summary>نماز کی تصدیق (کیا نماز پڑھ لی؟)</summary><div class="body">
+    <div class="seg" id="chkRow" hidden><span>وقت ختم ہونے سے پہلے یاد دہانی:</span><button id="chkBtn" aria-pressed="false">بند</button></div>
+    <div class="cfgrow"><span>وقت ختم ہونے سے کتنی دیر پہلے</span><select id="chkMin" aria-label="منٹ"><option value="15">۱۵ منٹ</option><option value="20">۲۰ منٹ</option><option value="30">۳۰ منٹ</option><option value="45">۴۵ منٹ</option><option value="60">۶۰ منٹ</option></select></div>
+    <div class="seg"><span>ہاں کہنے پر نماز کے بعد کے اذکار:</span><button id="chkAdhkar" aria-pressed="true">آن</button></div>
+    <p class="hint">فجر کا وقت طلوعِ آفتاب پر، ظہر عصر کے آغاز پر، عصر غروب پر، مغرب عشاء کے آغاز پر اور عشاء آدھی رات پر ختم ہوتا ہے۔ یاد دہانی انہی اوقات سے پہلے آتی ہے۔</p>
   </div></details>
 
   <details class="sec"><summary>ترتیبات</summary><div class="body">
@@ -698,11 +728,37 @@ html[data-zoom="2"] #app { zoom: 1.22; }
   <div class="hl" id="hList"></div>
 </div>
 
+
+<div id="duas" hidden role="dialog" aria-label="مسنون دعائیں">
+  <button class="back" id="dBack"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>واپس</button>
+  <h1 style="margin:0;font-size:22px;line-height:2">مسنون دعائیں <small id="dCount" style="font-size:13px;color:var(--muted)"></small></h1>
+  <div class="search" style="margin:4px 0 0"><input id="dSearch" type="search" placeholder="دعا تلاش کریں" aria-label="دعا تلاش کریں" autocomplete="off"></div>
+  <div class="htopics" id="dTopics"></div>
+  <div class="hl" id="dList"></div>
+</div>
+
+<div id="asalah" hidden role="dialog" aria-label="نماز کے بعد کے اذکار">
+  <button class="back" id="aBack"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>واپس</button>
+  <h1 style="margin:0;font-size:22px;line-height:2">نماز کے بعد کے اذکار</h1>
+  <div class="hl" id="aList"></div>
+</div>
+
+<div id="chk" hidden role="alertdialog" aria-labelledby="chkT">
+  <div class="cic"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></svg></div>
+  <h2 id="chkT">کیا آپ نے نماز ادا کر لی؟</h2>
+  <p id="chkS"></p>
+  <button class="cb yes" id="chkYes">جی، ادا کر لی ✓</button>
+  <button class="cb" id="chkNo">ابھی نہیں</button>
+  <button class="cb soft" id="chkLater">10 منٹ بعد یاد دلائیں</button>
+  <button class="cb soft" id="chkClose" style="margin-top:0;min-height:44px">بند کریں</button>
+</div>
+
 <script src="core.js"></script>
 <script src="data.js"></script>
 <script src="hadith.js"></script>
 <script src="qdata.js"></script>
 <script src="naat.js"></script>
+<script src="duas.js"></script>
 <script src="remote.js"></script>
 <script src="app.js"></script>
 </body>
