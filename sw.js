@@ -1,6 +1,6 @@
 /* Taqweem service worker: caches the app shell and fonts so it opens offline.
    Audio is streamed and never cached. */
-var VERSION = 'taqweem-v19';
+var VERSION = 'taqweem-v20';
 var SHELL = ['./', 'index.html', 'core.js', 'data.js', 'hadith.js', 'naat.js', 'duas.js', 'books.js', 'remote.js', 'qdata.js', 'app.js', 'manifest.webmanifest', 'icon.svg'];
 
 self.addEventListener('install', function (e) {

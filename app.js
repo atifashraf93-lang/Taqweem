@@ -1495,19 +1495,24 @@
 
   /* ---------- kutub khana (links only, no book text inside the app) ---------- */
   var BK = window.BOOKS || [], BCATS = window.BOOK_CATS || {}, bst = { cat: 'all', q: '' }, bfav = store('bfav') || [];
+  function bookCard(b, i) {
+    return '<div class="hcard"><div class="bk"><div class="bt"><b>' + hEsc(b[1]) + '</b>' + (b[2] ? '<small>' + hEsc(b[2]) + '</small>' : '') + '</div><a class="rd" href="' + hEsc(b[3]) + '" target="_blank" rel="noopener">پڑھیں</a></div>' +
+      '<div class="hact"><button data-bfav="' + i + '" aria-pressed="' + (bfav.indexOf(i) >= 0) + '">پسندیدہ</button></div></div>';
+  }
   function paintBooks() {
     $('#bkTopics').innerHTML = Object.keys(BCATS).concat(['fav']).map(function (k) {
       return '<button data-bt="' + k + '" aria-pressed="' + (bst.cat === k) + '">' + (k === 'fav' ? 'پسندیدہ' : BCATS[k]) + '</button>';
     }).join('');
-    var q = bst.q.trim(), out = [];
+    var q = bst.q.trim(), html = '', n = 0, lastCat = '';
+    var groups = bst.cat === 'all' || bst.cat === 'fav' || q;
     BK.forEach(function (b, i) {
       if (bst.cat === 'fav' ? bfav.indexOf(i) < 0 : (bst.cat !== 'all' && b[0] !== bst.cat)) return;
-      if (q && (b[1] + ' ' + b[2] + ' ' + b[3]).indexOf(q) < 0) return;
-      out.push('<div class="hcard"><div class="bk"><div class="bt"><b>' + hEsc(b[1]) + '</b><small>' + hEsc(b[2]) + ' · ' + hEsc(b[3]) + '</small></div><a class="rd" href="' + hEsc(b[4]) + '" target="_blank" rel="noopener">پڑھیں</a></div>' +
-        '<div class="hact"><button data-bfav="' + i + '" aria-pressed="' + (bfav.indexOf(i) >= 0) + '">پسندیدہ</button></div></div>');
+      if (q && (b[1] + ' ' + b[2] + ' ' + (window.BOOK_AUTH[b[0]] || '')).indexOf(q) < 0) return;
+      if (groups && b[0] !== lastCat) { lastCat = b[0]; html += '<h2 class="bkh">' + hEsc(window.BOOK_AUTH[b[0]] || '') + '</h2>'; }
+      html += bookCard(b, i); n++;
     });
-    $('#bkCount').textContent = '(' + ur(out.length) + ')';
-    $('#bkList').innerHTML = out.join('') + '<p class="hnote">کتابوں کا متن ایپ میں محفوظ نہیں۔ "پڑھیں" دبانے پر Rekhta کی ویب سائٹ کھلتی ہے، جس کے لیے انٹرنیٹ چاہیے۔</p>';
+    $('#bkCount').textContent = '(' + ur(n) + ')';
+    $('#bkList').innerHTML = (html || '<p class="hnote">کوئی کتاب نہیں ملی۔</p>') + '<p class="hnote">کتابوں کا متن ایپ میں محفوظ نہیں۔ "پڑھیں" دبانے پر Rekhta کی ویب سائٹ کھلتی ہے، جس کے لیے انٹرنیٹ چاہیے۔</p>';
   }
   function openBooks() { bst = { cat: 'all', q: '' }; $('#bkSearch').value = ''; $('#books').hidden = false; paintBooks(); $('#bkList').scrollTop = 0; }
   $('#bkBack').addEventListener('click', function () { $('#books').hidden = true; });
