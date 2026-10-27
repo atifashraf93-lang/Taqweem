@@ -1493,6 +1493,33 @@
   });
   document.addEventListener('click', function (e) { if (e.target.closest('[data-duas]')) openDuas(); });
 
+  /* ---------- kutub khana (links only, no book text inside the app) ---------- */
+  var BK = window.BOOKS || [], BCATS = window.BOOK_CATS || {}, bst = { cat: 'all', q: '' }, bfav = store('bfav') || [];
+  function paintBooks() {
+    $('#bkTopics').innerHTML = Object.keys(BCATS).concat(['fav']).map(function (k) {
+      return '<button data-bt="' + k + '" aria-pressed="' + (bst.cat === k) + '">' + (k === 'fav' ? 'پسندیدہ' : BCATS[k]) + '</button>';
+    }).join('');
+    var q = bst.q.trim(), out = [];
+    BK.forEach(function (b, i) {
+      if (bst.cat === 'fav' ? bfav.indexOf(i) < 0 : (bst.cat !== 'all' && b[0] !== bst.cat)) return;
+      if (q && (b[1] + ' ' + b[2] + ' ' + b[3]).indexOf(q) < 0) return;
+      out.push('<div class="hcard"><div class="bk"><div class="bt"><b>' + hEsc(b[1]) + '</b><small>' + hEsc(b[2]) + ' · ' + hEsc(b[3]) + '</small></div><a class="rd" href="' + hEsc(b[4]) + '" target="_blank" rel="noopener">پڑھیں</a></div>' +
+        '<div class="hact"><button data-bfav="' + i + '" aria-pressed="' + (bfav.indexOf(i) >= 0) + '">پسندیدہ</button></div></div>');
+    });
+    $('#bkCount').textContent = '(' + ur(out.length) + ')';
+    $('#bkList').innerHTML = out.join('') + '<p class="hnote">کتابوں کا متن ایپ میں محفوظ نہیں۔ "پڑھیں" دبانے پر Rekhta کی ویب سائٹ کھلتی ہے، جس کے لیے انٹرنیٹ چاہیے۔</p>';
+  }
+  function openBooks() { bst = { cat: 'all', q: '' }; $('#bkSearch').value = ''; $('#books').hidden = false; paintBooks(); $('#bkList').scrollTop = 0; }
+  $('#bkBack').addEventListener('click', function () { $('#books').hidden = true; });
+  $('#bkSearch').addEventListener('input', function () { bst.q = this.value; paintBooks(); });
+  $('#books').addEventListener('click', function (e) {
+    var t = e.target.closest('[data-bt]');
+    if (t) { bst.cat = t.dataset.bt; paintBooks(); return; }
+    t = e.target.closest('[data-bfav]');
+    if (t) { var i = +t.dataset.bfav, p = bfav.indexOf(i); if (p >= 0) bfav.splice(p, 1); else bfav.push(i); store('bfav', bfav); paintBooks(); }
+  });
+  document.addEventListener('click', function (e) { if (e.target.closest('[data-books]')) openBooks(); });
+
   /* ---------- after-prayer adhkar ---------- */
   var AS = window.AFTER_SALAH || [], asCount = [];
   function openAfterSalah() {
@@ -1625,7 +1652,7 @@
       });
     }
   }
-  window.chkTest = { prayerWindow: prayerWindow, showChk: showChk, checkDue: checkDue, openAfterSalah: openAfterSalah, openDuas: openDuas, chkList: chkList };
+  window.chkTest = { prayerWindow: prayerWindow, showChk: showChk, checkDue: checkDue, openAfterSalah: openAfterSalah, openDuas: openDuas, openBooks: openBooks, chkList: chkList };
 
   /* ---------- start ---------- */
   var last = store('last');

@@ -299,9 +299,14 @@ html[data-zoom="2"] #app { zoom: 1.22; }
 
 /* naat */
 
-#duas, #asalah { position: absolute; inset: 0; z-index: 25; background: var(--bg); display: flex; flex-direction: column; padding: max(12px, env(safe-area-inset-top, 0px)) 16px 0; }
-#duas[hidden], #asalah[hidden] { display: none; }
-#duas .hl, #asalah .hl { flex: 1; overflow-y: auto; padding-bottom: max(24px, env(safe-area-inset-bottom, 0px)); }
+#duas, #asalah, #books { position: absolute; inset: 0; z-index: 25; background: var(--bg); display: flex; flex-direction: column; padding: max(12px, env(safe-area-inset-top, 0px)) 16px 0; }
+#duas[hidden], #asalah[hidden], #books[hidden] { display: none; }
+#duas .hl, #asalah .hl, #books .hl { flex: 1; overflow-y: auto; padding-bottom: max(24px, env(safe-area-inset-bottom, 0px)); }
+.bk { display: flex; align-items: center; gap: 10px; }
+.bk .bt { flex: 1; min-width: 0; }
+.bk .bt b { display: block; font-size: 17px; line-height: 1.9; font-weight: 600; }
+.bk .bt small { color: var(--muted); font-size: 13px; line-height: 1.8; }
+.bk a.rd { flex: none; min-height: 40px; padding: 0 16px; border-radius: 20px; background: var(--accent); color: var(--bg-deep); font-size: 15px; line-height: 40px; text-decoration: none; font-weight: 700; }
 .dcard .hur { font-size: 15px; color: var(--muted); }
 .acount { display: block; width: 100%; margin-top: 8px; min-height: 52px; border-radius: 16px; border: 1px solid var(--accent); background: var(--bg-deep); color: var(--accent); font-size: 18px; line-height: 2; }
 .acount[data-done="1"] { background: var(--accent); color: var(--bg-deep); }
@@ -405,7 +410,7 @@ html[data-zoom="2"] #app { zoom: 1.22; }
     <button class="htile" data-go="prayer"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><b>اوقاتِ نماز</b><small>پانچوں نمازیں اور یاد دہانی</small></span></button>
     <button class="htile" data-go="cal"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg><span><b>ہجری تقویم</b><small id="hOcc"></small></span></button>
   </div>
-  <div class="hquick"><button data-go="more" data-open="secMosque">قریبی مساجد</button><button data-hadith>احادیث</button><button data-naat>نعت</button><button data-duas>مسنون دعائیں</button><button data-tf>تفسیر</button><button data-mushaf>قرآن پڑھیں</button><button data-go="more" data-open="secTasbeeh">تسبیح</button><button data-go="more" data-open="secZakat">زکوٰۃ</button></div>
+  <div class="hquick"><button data-go="more" data-open="secMosque">قریبی مساجد</button><button data-hadith>احادیث</button><button data-naat>نعت</button><button data-duas>مسنون دعائیں</button><button data-books>کتب خانہ</button><button data-tf>تفسیر</button><button data-mushaf>قرآن پڑھیں</button><button data-go="more" data-open="secTasbeeh">تسبیح</button><button data-go="more" data-open="secZakat">زکوٰۃ</button></div>
   <div class="credit">Developed by SMAA</div>
   <div class="sadqa"><div class="sd-ar">رَبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا</div><div>اے میرے رب! میرے والدین پر رحم فرما، جیسے انہوں نے بچپن میں مجھے پالا تھا۔</div><div class="sd-n">صدقۂ جاریہ: والد سید سراج الدین اشرف اور والدہ روشن آرا کے لیے<br>اللہ انہیں بخش دے۔ آمین</div></div>
 </section>
@@ -737,6 +742,14 @@ html[data-zoom="2"] #app { zoom: 1.22; }
   <div class="hl" id="dList"></div>
 </div>
 
+<div id="books" hidden role="dialog" aria-label="کتب خانہ">
+  <button class="back" id="bkBack"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>واپس</button>
+  <h1 style="margin:0;font-size:22px;line-height:2">کتب خانہ <small id="bkCount" style="font-size:13px;color:var(--muted)"></small></h1>
+  <div class="search" style="margin:4px 0 0"><input id="bkSearch" type="search" placeholder="کتاب یا مصنف تلاش کریں" aria-label="کتاب تلاش کریں" autocomplete="off"></div>
+  <div class="htopics" id="bkTopics"></div>
+  <div class="hl" id="bkList"></div>
+</div>
+
 <div id="asalah" hidden role="dialog" aria-label="نماز کے بعد کے اذکار">
   <button class="back" id="aBack"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>واپس</button>
   <h1 style="margin:0;font-size:22px;line-height:2">نماز کے بعد کے اذکار</h1>
@@ -759,6 +772,7 @@ html[data-zoom="2"] #app { zoom: 1.22; }
 <script src="qdata.js"></script>
 <script src="naat.js"></script>
 <script src="duas.js"></script>
+<script src="books.js"></script>
 <script src="remote.js"></script>
 <script src="app.js"></script>
 </body>
