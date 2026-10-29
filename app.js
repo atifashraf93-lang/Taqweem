@@ -1076,7 +1076,7 @@
     var n = NT[i]; nCur = i; $('#nTitle').textContent = n.t;
     var arabic = /[ً-ٟ]/.test(n.v.length ? n.v[0][0] : "");
     $('#nBody').innerHTML = '<div class="hs" style="text-align:center;margin-top:6px">' + (n.poet ? hEsc(n.poet) + ' · ' : '') + n.kind + '</div>' +
-      (n.audio ? '<div class="nplay"><button id="nPlay" aria-label="چلائیں">▶</button><span id="nCur">0:00</span><input id="nSeek" type="range" min="0" max="100" value="0" aria-label="آگے پیچھے"><span id="nDur">0:00</span></div>' : '<p class="noaudio">اس کلام کی ریکارڈنگ ابھی شامل نہیں۔</p>') +
+      (n.audio ? '<div class="nplay"><button id="nPlay" aria-label="چلائیں">▶</button><span id="nCur">0:00</span><input id="nSeek" type="range" min="0" max="100" value="0" aria-label="آگے پیچھے"><span id="nDur">0:00</span></div>' : (n.v.length && 'speechSynthesis' in window ? '<div class="nplay" style="flex-wrap:wrap;justify-content:center"><button class="btn" id="nSpeak" style="width:auto;padding:8px 20px;min-height:44px;font-size:16px;margin:0">🔊 متن پڑھ کر سنائیں</button><small class="hnote" style="width:100%;text-align:center;margin:4px 0 0">مشینی آواز میں تلاوتِ متن ہے، نعت کی ریکارڈنگ نہیں۔</small></div>' : '<p class="noaudio">اس کلام کی ریکارڈنگ ابھی شامل نہیں۔</p>')) +
       (n.v.length ? '' : '<p class="noaudio">اس کلام کا متن شامل نہیں، صرف آڈیو ہے۔</p>') +
       (n.v.length ? '<div class="nv">' : '<div hidden>') + n.v.map(function (c, k) { return '<div class="l1' + (arabic ? ' ar' : '') + '">' + hEsc(c[0]) + '</div><div class="l2' + (arabic ? ' ar' : '') + '">' + hEsc(c[1]) + '</div>' + (n.m && n.m[k] ? '<div class="mean">' + hEsc(n.m[k]) + '</div>' : '') + (k < n.v.length - 1 ? '<hr style="border:none;border-top:1px solid var(--line);margin:6px 24px">' : ''); }).join('') + '</div>' +
       (n.v.length ? '<button class="btn ghost" data-nshare="' + i + '" style="margin-top:12px">شیئر کریں</button>' : '');
@@ -1092,10 +1092,26 @@
   ['timeupdate', 'play', 'pause', 'loadedmetadata', 'ended'].forEach(function (ev) { naatAudio.addEventListener(ev, nPaint); });
   naatAudio.addEventListener('play', function () { if (!audio.paused) audio.pause(); stopClips(); });
   audio.addEventListener('play', function () { if (!naatAudio.paused) naatAudio.pause(); });
+  function nStop() { try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (x) { /* ignore */ } var b = $('#nSpeak'); if (b) b.textContent = '🔊 متن پڑھ کر سنائیں'; }
+  function nSpeak() {
+    var b = $('#nSpeak'), n = NT[nCur]; if (!b || !n) return;
+    if (window.speechSynthesis.speaking) { nStop(); return; }
+    if (!naatAudio.paused) naatAudio.pause();
+    var arabic = /[ً-ٟ]/.test(n.v[0][0]), lines = [];
+    n.v.forEach(function (c) { lines.push(c[0]); if (!arabic) lines.push(c[1]); else if (c[1] && !/[a-zA-Z]/.test(c[1])) lines.push(c[1]); });
+    window.speechSynthesis.cancel();
+    lines.forEach(function (l, i) {
+      var u = new SpeechSynthesisUtterance(l); u.lang = arabic && i % 2 === 0 ? 'ar-SA' : 'ur-PK'; u.rate = 0.8;
+      if (i === lines.length - 1) u.onend = function () { nStop(); };
+      window.speechSynthesis.speak(u);
+    });
+    b.textContent = '⏹ روکیں';
+  }
   function openNaat() { $('#naat').hidden = false; nList(); }
-  $('#nBack').addEventListener('click', function () { if (nCur !== null) nList(); else { $('#naat').hidden = true; naatAudio.pause(); } });
+  $('#nBack').addEventListener('click', function () { nStop(); if (nCur !== null) nList(); else { $('#naat').hidden = true; naatAudio.pause(); } });
   $('#naat').addEventListener('click', function (e) {
     var t = e.target.closest('[data-nid]'); if (t) return nShow(+t.dataset.nid);
+    if (e.target.closest('#nSpeak')) { nSpeak(); return; }
     if (e.target.closest('#nPlay')) { if (naatAudio.paused) { var p = naatAudio.play(); if (p && p.catch) p.catch(function () { toast('آواز نہیں چل سکی'); }); } else naatAudio.pause(); return; }
     t = e.target.closest('[data-nshare]');
     if (t) { var n = NT[+t.dataset.nshare], text = n.t + '\n' + n.poet + '\n\n' + n.v.map(function (c) { return c[0] + '\n' + c[1]; }).join('\n\n') + '\n\n— تقویم، Developed by SMAA'; if (navigator.share) navigator.share({ text: text }).catch(function () { /* cancelled */ }); else if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { toast('نقل کر لی گئی'); }); }
