@@ -330,7 +330,8 @@
 
   function clearReminders(LN) {
     return LN.getPending().then(function (p) {
-      return p.notifications.length ? LN.cancel({ notifications: p.notifications.map(function (n) { return { id: n.id }; }) }) : null;
+      var mine = p.notifications.filter(function (n) { return n.id < 7000; }); /* ids 7000+ belong to daily ayat/hadith and special dates */
+      return mine.length ? LN.cancel({ notifications: mine.map(function (n) { return { id: n.id }; }) }) : null;
     });
   }
 
@@ -1442,6 +1443,7 @@
     });
     items.sort(function (x, y) { return x.n - y.n; });
     $('#hOcc').textContent = items.length ? items[0].name + ' · ' + (items[0].n - tn === 0 ? 'آج' : ur(items[0].n - tn) + ' دن') : 'اسلامی ایام';
+    if (window.TaqweemExtras) window.TaqweemExtras.paintHome();
     tickHome();
   }
   function tickHome() {

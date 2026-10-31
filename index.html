@@ -393,6 +393,7 @@ html[data-zoom="2"] #app { zoom: 1.22; }
 #mSheetBody .mi small { color: var(--muted); font-size: 12px; }
 #mSheetBody input { width: 100%; min-height: 48px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: 18px; padding: 0 12px; text-align: center; direction: ltr; margin-bottom: 8px; }
 </style>
+<link rel="stylesheet" href="extras.css">
 </head>
 <body>
 <div id="app">
@@ -550,7 +551,7 @@ html[data-zoom="2"] #app { zoom: 1.22; }
     <div class="trow"><button id="tasListen">▶ آواز سنیں</button><button id="tasVoice" aria-pressed="true">ہر گنتی پر آواز</button><button id="tasReset">صفر کریں</button></div>
   </div></details>
 
-  <details class="sec"><summary>نماز ٹریکر اور قضا</summary><div class="body">
+  <details class="sec" id="secTrk"><summary>نماز ٹریکر اور قضا</summary><div class="body">
     <p class="sub">آج کی ادا کی ہوئی نمازیں چنیں</p>
     <div class="trk" id="trkBtns"></div>
     <div class="wkbars" id="trkWeek" aria-hidden="true"></div>
@@ -582,7 +583,7 @@ html[data-zoom="2"] #app { zoom: 1.22; }
     <p class="hint">فجر کا وقت طلوعِ آفتاب پر، ظہر عصر کے آغاز پر، عصر غروب پر، مغرب عشاء کے آغاز پر اور عشاء آدھی رات پر ختم ہوتا ہے۔ یاد دہانی انہی اوقات سے پہلے آتی ہے۔</p>
   </div></details>
 
-  <details class="sec"><summary>ترتیبات</summary><div class="body">
+  <details class="sec" id="secSet"><summary>ترتیبات</summary><div class="body">
     <div class="seg"><span>تھیم:</span><button data-theme="dark" aria-pressed="true">گہرا</button><button data-theme="light" aria-pressed="false">روشن</button></div>
     <div class="seg"><span>سائز:</span><button data-zoom="0" aria-pressed="true">عام</button><button data-zoom="1" aria-pressed="false">بڑا</button><button data-zoom="2" aria-pressed="false">بہت بڑا</button></div>
     <div class="seg" id="azanRow" hidden><span>نماز کے وقت آواز:</span><button id="azanBtn" aria-pressed="true">اذان</button></div>
@@ -775,6 +776,10 @@ html[data-zoom="2"] #app { zoom: 1.22; }
 <script src="duas.js"></script>
 <script src="books.js"></script>
 <script src="remote.js"></script>
+<script src="seerat-data.js"></script>
 <script src="app.js"></script>
+<script src="daily.js"></script>
+<script src="extras.js"></script>
+<script src="seerat.js"></script>
 </body>
 </html>
