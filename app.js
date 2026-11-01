@@ -1353,10 +1353,11 @@
 
   /* ---------- settings: theme, size, fasting reminders ---------- */
   function applyLook() {
-    var th = store('theme') === 'light' ? 'light' : 'dark', zm = +store('zoom') || 0;
+    var TH = { dark: '#0A1B19', emerald: '#071a1b', night: '#0a1030', desert: '#F2E7CC', light: '#EDE6D3' }, th = store('theme'), zm = +store('zoom') || 0;
+    if (!TH[th]) th = 'dark';
     document.documentElement.setAttribute('data-theme', th);
     document.documentElement.setAttribute('data-zoom', String(zm));
-    var mt = document.querySelector('meta[name="theme-color"]'); if (mt) mt.content = th === 'light' ? '#EDE6D3' : '#0A1B19';
+    var mt = document.querySelector('meta[name="theme-color"]'); if (mt) mt.content = TH[th];
     $$('[data-theme]', $('#tab-more')).forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.theme === th)); });
     $$('[data-zoom]', $('#tab-more')).forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.zoom === zm)); });
   }
