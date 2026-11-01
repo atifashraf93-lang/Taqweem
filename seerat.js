@@ -9,6 +9,9 @@
   var TABS = { anbiya: 'انبیاء', sahaba: 'صحابہ', sahabiyat: 'صحابیات' };
   var HON = { anbiya: 'علیہم السلام', sahaba: 'رضی اللہ عنہم', sahabiyat: 'رضی اللہ عنہن' };
   var DET = window.SEERAT_D || {};
+  var SB = [[/وفات|روضہ|قبر|شہادت/, 'wafat'], [/غزوات|جنگ|فتوحات|بدر|احد|خندق|معرکہ|موتہ/, 'ghazwa'], [/ہجرت|غار|حبشہ|سفر|طوفان|کشتی|کعبہ/, 'hijrat'], [/قرآن|علم|تفسیر|حدیث|فقہ|کتاب|تورات|زبور|وحی/, 'quran'], [/اسلام|ایمان|دعوت|نبوت/, 'islam'], [/تعارف|نسب|ولادت|ابتدائی|پیدائش|بچپن/, 'nasab']];
+  function sbKind(h) { for (var i = 0; i < SB.length; i++) if (SB[i][0].test(h)) return SB[i][1]; return ''; }
+  function secHead(h) { var k = sbKind(h); return k ? '<div class="sban"><img src="img/s_' + k + '.svg" alt="" loading="lazy" decoding="async"><b>' + esc(h) + '</b></div>' : '<div class="hs">' + esc(h) + '</div>'; }
   var FILT = {
     anbiya: [['all', 'سب'], ['u', 'اولوالعزم']],
     sahaba: [['all', 'سب'], ['khulafa', 'خلفائے راشدین'], ['ashara', 'عشرہ مبشرہ'], ['ahl', 'اہلِ بیت']],
@@ -21,7 +24,7 @@
     el = document.createElement('div'); el.id = 'seerat'; el.hidden = true; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'سیرت و تاریخ');
     el.innerHTML = '<button class="back" id="sBack"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>واپس</button>' +
       '<h1 style="margin:0;font-size:22px;line-height:2" id="sTitle">سیرت و تاریخ</h1>' +
-      '<div id="sMain"><div class="stabs" id="sTabs"></div><div class="search" style="margin:4px 0 0"><input id="sSearch" type="search" placeholder="نام تلاش کریں" autocomplete="off" aria-label="نام تلاش کریں"></div>' +
+      '<div id="sMain"><img class="pban" id="sTabBan" src="img/b_anbiya.svg" alt=""><div class="stabs" id="sTabs"></div><div class="search" style="margin:4px 0 0"><input id="sSearch" type="search" placeholder="نام تلاش کریں" autocomplete="off" aria-label="نام تلاش کریں"></div>' +
       '<div class="htopics" id="sFilt"></div><div class="hl" id="sList"></div></div><div class="hl" id="sDet" hidden></div>';
     (document.getElementById('app') || document.body).appendChild(el);
     $('#sBack').addEventListener('click', function () { if (!$('#sDet').hidden) showList(); else el.hidden = true; });
@@ -60,7 +63,7 @@
     });
   }
   function qBlock(a) { return '<div class="sq"><div class="har">' + esc(a.ar) + '</div><div class="hur">' + esc(a.ur) + '</div><div class="hs">' + esc(a.ref) + '</div></div>'; }
-  function paintAll() { paintTabs(); paintFilt(); paintList(); $('#sSearch').value = st.q; }
+  function paintAll() { var tb = $('#sTabBan'); if (tb) tb.src = 'img/b_' + st.tab + '.svg'; paintTabs(); paintFilt(); paintList(); $('#sSearch').value = st.q; }
   function showList() { $('#sDet').hidden = true; $('#sMain').hidden = false; $('#sTitle').textContent = 'سیرت و تاریخ'; }
   function openDetail(i) {
     var x = S[st.tab][i]; if (!x) return;
@@ -68,7 +71,7 @@
     var det = $('#sDet');
     det.innerHTML = '<div class="shero"><span class="sav big">' + esc(initial(x.n)) + '</span><h2>' + esc(x.n) + '</h2><small>' + esc(x.t) + '</small></div>' +
       '<div class="sbox"><div class="hs">تعارف</div><p>' + esc(x.b) + '</p></div>' +
-      (DET[x.n] ? DET[x.n].map(function (sec) { return '<div class="sbox"><div class="hs">' + esc(sec[0]) + '</div>' + String(sec[1]).split('\n').map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') + '</div>'; }).join('') : '') +
+      (DET[x.n] ? DET[x.n].map(function (sec) { return '<div class="sbox">' + secHead(sec[0]) + String(sec[1]).split('\n').map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') + '</div>'; }).join('') : '') +
       (x.qn ? '<div class="sbox"><div class="hs">قرآن میں ذکر</div><p>' + esc(x.qn) + '</p></div>' : '') +
       ((x.q && x.q.length) ? '<div class="sbox" id="sQ"><div class="hs">قرآن سے</div><div id="sQB">…</div></div>' : '') +
       '<div class="sbox"><div class="hs">ماخذ</div><p class="small">' + esc(st.tab === 'anbiya' ? S.anbiyaSrc : S.sahabaSrc) + '</p></div>' +
