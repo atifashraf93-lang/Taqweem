@@ -11,7 +11,12 @@
   var DET = window.SEERAT_D || {};
   var SB = [[/وفات|روضہ|قبر|شہادت/, 'wafat'], [/غزوات|جنگ|فتوحات|بدر|احد|خندق|معرکہ|موتہ/, 'ghazwa'], [/ہجرت|غار|حبشہ|سفر|طوفان|کشتی|کعبہ/, 'hijrat'], [/قرآن|علم|تفسیر|حدیث|فقہ|کتاب|تورات|زبور|وحی/, 'quran'], [/اسلام|ایمان|دعوت|نبوت/, 'islam'], [/تعارف|نسب|ولادت|ابتدائی|پیدائش|بچپن/, 'nasab']];
   function sbKind(h) { for (var i = 0; i < SB.length; i++) if (SB[i][0].test(h)) return SB[i][1]; return ''; }
-  function secHead(h) { var k = sbKind(h); return k ? '<div class="sban"><img src="img/s_' + k + '.svg" alt="" loading="lazy" decoding="async"><b>' + esc(h) + '</b></div>' : '<div class="hs">' + esc(h) + '</div>'; }
+  function rich(t) {
+    return esc(t).replace(/ﷺ/g, '<span class="sal">صلی اللہ علیہ وسلم</span>')
+      .replace(/(رضی اللہ (?:تعالیٰ )?عن(?:ہ|ہا|ہم|ہما|ہن))/g, '<span class="rz">$1</span>')
+      .replace(/(علیہ(?:م)? السلام|علیہما السلام)/g, '<span class="as">$1</span>');
+  }
+  function secHead(h) { var k = sbKind(h); return k ? '<div class="sban"><img src="img/s_' + k + '.svg" alt="" loading="lazy" decoding="async"><b><i>✦</i>' + rich(h) + '<i>✦</i></b></div>' : '<div class="hs">' + rich(h) + '</div>'; }
   var FILT = {
     anbiya: [['all', 'سب'], ['u', 'اولوالعزم']],
     sahaba: [['all', 'سب'], ['khulafa', 'خلفائے راشدین'], ['ashara', 'عشرہ مبشرہ'], ['ahl', 'اہلِ بیت']],
@@ -70,9 +75,9 @@
     $('#sMain').hidden = true; $('#sDet').hidden = false; $('#sTitle').textContent = TABS[st.tab] + ' ' + HON[st.tab];
     var det = $('#sDet');
     det.innerHTML = '<div class="shero"><span class="sav big">' + esc(initial(x.n)) + '</span><h2>' + esc(x.n) + '</h2><small>' + esc(x.t) + '</small></div>' +
-      '<div class="sbox"><div class="hs">تعارف</div><p>' + esc(x.b) + '</p></div>' +
-      (DET[x.n] ? DET[x.n].map(function (sec) { return '<div class="sbox">' + secHead(sec[0]) + String(sec[1]).split('\n').map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') + '</div>'; }).join('') : '') +
-      (x.qn ? '<div class="sbox"><div class="hs">قرآن میں ذکر</div><p>' + esc(x.qn) + '</p></div>' : '') +
+      '<div class="sbox"><div class="hs">تعارف</div><p>' + rich(x.b) + '</p></div>' +
+      (DET[x.n] ? DET[x.n].map(function (sec) { return '<div class="sbox">' + secHead(sec[0]) + String(sec[1]).split('\n').map(function (p) { return '<p>' + rich(p) + '</p>'; }).join('') + '</div>'; }).join('') : '') +
+      (x.qn ? '<div class="sbox"><div class="hs">قرآن میں ذکر</div><p>' + rich(x.qn) + '</p></div>' : '') +
       ((x.q && x.q.length) ? '<div class="sbox" id="sQ"><div class="hs">قرآن سے</div><div id="sQB">…</div></div>' : '') +
       '<div class="sbox"><div class="hs">ماخذ</div><p class="small">' + esc(st.tab === 'anbiya' ? S.anbiyaSrc : S.sahabaSrc) + '</p></div>' +
       '<p class="hnote">مختصر خلاصہ ہے۔ جہاں سال میں اختلاف ہے وہاں "تقریباً" لکھا ہے۔ مکمل تفصیل کے لیے مستند کتب اور اہلِ علم سے رجوع کریں۔</p>';
