@@ -62,7 +62,7 @@
 
   /* ---------- More tiles ---------- */
   var TILES = [['🕌', 'قریبی مساجد', 'secMosque'], ['📿', 'تسبیح اور درود', 'secTasbeeh'], ['✅', 'نماز ٹریکر اور قضا', 'secTrk'], ['🌙', 'روزوں کا ٹریکر', 'secRoza'],
-    ['📖', 'قرآن ختم کا ہدف', 'secKhatm'], ['🎂', 'خاص ہجری تاریخیں', 'secDates'], ['🔔', 'روزانہ آیت و حدیث', 'secDaily'], ['💰', 'زکوٰۃ', 'secZakat'], ['🕋', 'سیرت و تاریخ', 'SEERAT'], ['⚙️', 'ترتیبات', 'secSet']];
+    ['📖', 'قرآن ختم کا ہدف', 'secKhatm'], ['🎂', 'خاص ہجری تاریخیں', 'secDates'], ['🔔', 'روزانہ آیت و حدیث', 'secDaily'], ['💰', 'زکوٰۃ', 'secZakat'], ['🕋', 'سیرت و تاریخ', 'SEERAT'], ['🕌', 'عمرہ و حج', 'UMRAH'], ['⚙️', 'ترتیبات', 'secSet']];
   function buildTiles() {
     var more = $('#tab-more'); if (!more || $('#mTiles')) return;
     var g = document.createElement('div'); g.id = 'mTiles'; g.className = 'mtiles';
@@ -71,6 +71,7 @@
     g.addEventListener('click', function (e) {
       var b = e.target.closest('[data-tile]'); if (!b) return;
       if (b.dataset.tile === 'SEERAT') { if (window.TaqweemSeerat) window.TaqweemSeerat.open(); return; }
+      if (b.dataset.tile === 'UMRAH') { if (window.TaqweemUmrah) window.TaqweemUmrah.open(); return; }
       var d = document.getElementById(b.dataset.tile); if (d) { d.open = true; d.scrollIntoView({ block: 'start' }); }
     });
   }

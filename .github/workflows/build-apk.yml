@@ -28,7 +28,7 @@ jobs:
       - name: Prepare web folder
         run: |
           mkdir -p www
-          cp index.html core.js data.js hadith.js naat.js duas.js books.js remote.js qdata.js app.js seerat-data.js seerat-detail.js seerat-detail-a1.js seerat-detail-a2.js seerat-detail-s1.js seerat-detail-s2.js seerat-detail-h1.js banners.js daily.js extras.js seerat.js extras.css sw.js manifest.webmanifest icon.svg icon-192.png icon-512.png azan.mp3 quran-ar.txt www/
+          cp index.html core.js data.js hadith.js naat.js duas.js books.js remote.js qdata.js app.js seerat-data.js seerat-detail.js seerat-detail-a1.js seerat-detail-a2.js seerat-detail-s1.js seerat-detail-s2.js seerat-detail-h1.js umrah-data.js umrah.js banners.js daily.js extras.js seerat.js extras.css sw.js manifest.webmanifest icon.svg icon-192.png icon-512.png azan.mp3 quran-ar.txt www/
           cp -r audio www/audio
           cp -r img www/img
           if [ -d naat ]; then cp -r naat www/naat; fi
