@@ -7,6 +7,8 @@
   function $(s, r) { return (r || document).querySelector(s); }
   function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
   var TABS = { anbiya: 'انبیاء', sahaba: 'صحابہ', sahabiyat: 'صحابیات' };
+  var HON = { anbiya: 'علیہم السلام', sahaba: 'رضی اللہ عنہم', sahabiyat: 'رضی اللہ عنہن' };
+  var DET = window.SEERAT_D || {};
   var FILT = {
     anbiya: [['all', 'سب'], ['u', 'اولوالعزم']],
     sahaba: [['all', 'سب'], ['khulafa', 'خلفائے راشدین'], ['ashara', 'عشرہ مبشرہ'], ['ahl', 'اہلِ بیت']],
@@ -30,7 +32,7 @@
       b = e.target.closest('[data-si]'); if (b) openDetail(+b.dataset.si);
     });
   }
-  function paintTabs() { $('#sTabs').innerHTML = Object.keys(TABS).map(function (k) { return '<button data-st="' + k + '" aria-pressed="' + (st.tab === k) + '">' + TABS[k] + '</button>'; }).join(''); }
+  function paintTabs() { $('#sTabs').innerHTML = Object.keys(TABS).map(function (k) { return '<button data-st="' + k + '" aria-pressed="' + (st.tab === k) + '">' + TABS[k] + '<small class="hon">' + HON[k] + '</small></button>'; }).join(''); }
   function paintFilt() { $('#sFilt').innerHTML = FILT[st.tab].map(function (f) { return '<button data-sf="' + f[0] + '" aria-pressed="' + (st.f === f[0]) + '">' + f[1] + '</button>'; }).join(''); }
   function initial(n) { var c = norm(n).charAt(0); return c || '•'; }
   function match(x) {
@@ -62,10 +64,11 @@
   function showList() { $('#sDet').hidden = true; $('#sMain').hidden = false; $('#sTitle').textContent = 'سیرت و تاریخ'; }
   function openDetail(i) {
     var x = S[st.tab][i]; if (!x) return;
-    $('#sMain').hidden = true; $('#sDet').hidden = false; $('#sTitle').textContent = TABS[st.tab];
+    $('#sMain').hidden = true; $('#sDet').hidden = false; $('#sTitle').textContent = TABS[st.tab] + ' ' + HON[st.tab];
     var det = $('#sDet');
     det.innerHTML = '<div class="shero"><span class="sav big">' + esc(initial(x.n)) + '</span><h2>' + esc(x.n) + '</h2><small>' + esc(x.t) + '</small></div>' +
       '<div class="sbox"><div class="hs">تعارف</div><p>' + esc(x.b) + '</p></div>' +
+      (DET[x.n] ? DET[x.n].map(function (sec) { return '<div class="sbox"><div class="hs">' + esc(sec[0]) + '</div>' + String(sec[1]).split('\n').map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') + '</div>'; }).join('') : '') +
       (x.qn ? '<div class="sbox"><div class="hs">قرآن میں ذکر</div><p>' + esc(x.qn) + '</p></div>' : '') +
       ((x.q && x.q.length) ? '<div class="sbox" id="sQ"><div class="hs">قرآن سے</div><div id="sQB">…</div></div>' : '') +
       '<div class="sbox"><div class="hs">ماخذ</div><p class="small">' + esc(st.tab === 'anbiya' ? S.anbiyaSrc : S.sahabaSrc) + '</p></div>' +

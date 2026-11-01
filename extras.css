@@ -57,7 +57,8 @@
 #seerat #sMain[hidden], #seerat #sDet[hidden] { display: none; }
 #seerat .hl { flex: 1; overflow-y: auto; padding-bottom: max(24px, env(safe-area-inset-bottom, 0px)); }
 .stabs { display: flex; gap: 6px; margin: 4px 0 6px; }
-.stabs button { flex: 1; min-height: 42px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 14.5px; line-height: 2; }
+.stabs button small.hon { display: block; font-size: 11px; line-height: 1.5; opacity: .85; font-weight: 400; }
+.stabs button { flex: 1; min-height: 52px; padding: 4px 2px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 14.5px; line-height: 2; }
 .stabs button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: transparent; font-weight: 600; }
 .scard { display: flex; align-items: center; gap: 12px; width: 100%; text-align: right; margin-top: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 9px 12px; }
 .sav { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--accent); background: var(--surface-hi); color: var(--accent); display: grid; place-items: center; font-size: 19px; flex: none; }
@@ -71,6 +72,7 @@
 .shero small { color: var(--muted); font-size: 13.5px; }
 .sbox { margin-top: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 8px 14px 10px; }
 .sbox .hs { color: var(--accent); font-size: 13px; line-height: 2; }
+.sbox p + p { margin-top: 8px; }
 .sbox p { margin: 0; font-size: 15.5px; line-height: 2.2; }
 .sbox p.small { font-size: 13px; color: var(--muted); line-height: 2; }
 .sq { border-top: 1px solid var(--line-soft); padding: 6px 0; }
