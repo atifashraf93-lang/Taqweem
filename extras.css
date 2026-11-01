@@ -80,3 +80,6 @@
 .sq .har { font-family: var(--arabic); font-size: 21px; line-height: 2.2; direction: rtl; text-align: right; }
 .sq .hur { font-size: 14.5px; line-height: 2.1; }
 .sq .hs { font-size: 12px; color: var(--accent); line-height: 2; }
+
+/* photo banners */
+.pban { display: block; width: 100%; height: auto; aspect-ratio: 16 / 7; object-fit: cover; border-radius: 16px; margin: 6px 0 10px; border: 1px solid var(--line); background: var(--surface); }

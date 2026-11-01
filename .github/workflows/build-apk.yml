@@ -30,6 +30,7 @@ jobs:
           mkdir -p www
           cp index.html core.js data.js hadith.js naat.js duas.js books.js remote.js qdata.js app.js seerat-data.js seerat-detail.js daily.js extras.js seerat.js extras.css sw.js manifest.webmanifest icon.svg icon-192.png icon-512.png azan.mp3 quran-ar.txt www/
           cp -r audio www/audio
+          cp -r img www/img
           if [ -d naat ]; then cp -r naat www/naat; fi
           if [ -f translation-ur.txt ]; then cp translation-ur.txt www/; fi
 
