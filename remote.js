@@ -10,7 +10,7 @@
   var FIXED = false; /* true: notices float at the top instead of sitting in #tab-home */
   var VER = '2026.10.26';
   var CONTENT_URL = 'https://raw.githubusercontent.com/atifashraf93-lang/Taqweem/main/content.json';
-  var STATS_URL = 'https://script.google.com/macros/s/AKfycbxXg5cacMf8JNUtCZpF9XFnZdNgj3db7SYS6IVxuuTN9KEkzCVkeAAKJ_Y-AcjeDCB0/exec';
+  var STATS_URL = 'https://script.google.com/macros/s/AKfycbwHw9csC2VqvVvnAyLkdf60jd37NoJ1hvCTIlsIimGYgRBansAjn8zgfVcd3ZmIleMZ/exec';
 
   function get(k) { try { var v = localStorage.getItem(PREFIX + k); return v === null ? null : JSON.parse(v); } catch (e) { return null; } }
   function set(k, v) { try { localStorage.setItem(PREFIX + k, JSON.stringify(v)); } catch (e) { /* storage off */ } }
