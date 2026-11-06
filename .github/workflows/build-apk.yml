@@ -28,7 +28,7 @@ jobs:
       - name: Prepare web folder
         run: |
           mkdir -p www
-          cp index.html core.js data.js hadith.js naat.js duas.js books.js remote.js qdata.js app.js seerat-data.js seerat-detail.js seerat-detail-a1.js seerat-detail-a2.js seerat-detail-s1.js seerat-detail-s2.js seerat-detail-h1.js umrah-data.js umrah.js banners.js daily.js extras.js seerat.js extras.css sw.js manifest.webmanifest icon.svg icon-192.png icon-512.png azan.mp3 quran-ar.txt www/
+          cp index.html updater.js core.js data.js hadith.js naat.js duas.js books.js remote.js qdata.js app.js seerat-data.js seerat-detail.js seerat-detail-a1.js seerat-detail-a2.js seerat-detail-s1.js seerat-detail-s2.js seerat-detail-h1.js umrah-data.js umrah.js banners.js daily.js extras.js seerat.js extras.css sw.js manifest.webmanifest icon.svg icon-192.png icon-512.png azan.mp3 quran-ar.txt www/
           cp -r audio www/audio
           cp -r img www/img
           if [ -d naat ]; then cp -r naat www/naat; fi
@@ -39,6 +39,13 @@ jobs:
 
       - name: Add Android platform
         run: npx cap add android
+
+      - name: Native update plugin and activity
+        run: |
+          D=android/app/src/main/java/pk/smaa/taqweem
+          mkdir -p $D
+          cp java/*.java $D/
+          sed -i 's#</manifest>#    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n</manifest>#' android/app/src/main/AndroidManifest.xml
 
       - name: Fixed signing key and version number (so new APKs update the old app)
         run: |
@@ -79,6 +86,9 @@ jobs:
             done
           done
 
+      - name: Stamp build number
+        run: echo "window.SMAA_BUILD = ${{ github.run_number }};" > www/build.js
+
       - name: Sync web files
         run: npx cap sync android
 
@@ -94,12 +104,29 @@ jobs:
           name: Taqweem-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk Taqweem.apk
+      - name: Rename APK and pack the web files (self-update bundle)
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk Taqweem.apk
+          cd android/app/src/main/assets/public && zip -qr "$GITHUB_WORKSPACE/www.zip" . && cd "$GITHUB_WORKSPACE" && ls -l www.zip
+
+      - name: Second download address for the web bundle (ota branch)
+        id: ota
+        continue-on-error: true
+        run: |
+          mkdir -p /tmp/ota && cp www.zip /tmp/ota/ && cd /tmp/ota
+          git init -q && git checkout -q -b ota
+          git config user.name "SMAA CI" && git config user.email "ci@users.noreply.github.com"
+          git add www.zip && git commit -q -m "web bundle ${{ github.run_number }}"
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git push -q -f origin ota
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
       - name: Publish APK as a release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: apk-${{ github.run_number }}
           name: Taqweem APK ${{ github.run_number }}
-          files: Taqweem.apk
+          body: "need=1 sha=${{ steps.ota.outputs.sha }}"
+          files: |
+            Taqweem.apk
+            www.zip
