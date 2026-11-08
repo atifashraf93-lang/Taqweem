@@ -470,6 +470,11 @@
   var player = { n: 0, sources: [], si: 0, token: 0, repeat: false, sleep: 0, sleepTimer: 0, dragging: false };
   var SLEEP_STEPS = [0, 15, 30, 60];
 
+  /* Sudais and Shuraim with Urdu translation (Fateh Muhammad Jalandhry), one file per surah, streamed from NooreSunnat */
+  var URDU_AUDIO = '001s-fatiha 002s-Baqarah 003s-Imran 004s-Nisa 005s-Maida 006sAnham 007s-Aaraf 008s-Anfal 009s-Tobah 010s-Younus 011s-Hood 012s-Yousuf 013s-Raad 014s-Ibraheem 015s-Hijr 016s-Nihal 017s-Bani-Israil 018s-Kahf 019s-Mariam 020s-Taha 021s-Anbiyea 022s-Haj 023s-Mominoon 024s-Noor 025s-Furqaan 026s-Shuaara 027s-Namal 028s-Qasas 029s-Ankaboot 030s-Room 031s-Luqmaan 032s-Sajda 033s-Ahzab 034s-Saba 035s-Fatir 036s-Yaseen 037s-Saafaat 038s-Swad 039s-Zomar 040s-Momin 041s-H-Sajda 042s-Shoora 043s-Zukhraf 044s-Dukham 045s-Jasia 046s-Ahkaf 047s-Mohammad 048s-Fatah 049s-Hujara 050s-Qaaf 051s-Zaryeat 052s-Toor 053s-Najam 054s-Qamar 055s-Rahman 056s-Waqia 057s-Hadeed 058s-Mojadilah 059s-Hashar 060s-Mumtahina 061s-Saf 062s-Jumah 063s-Munafiqoon 064s-Taghabun 065s-Talaq 066s-Tahreem 067s-Mulk 068s-Qalm 069s-Haaqah 070s-Maarij 071s-Nooh 072s-Jin 073s-Muzammil 074s-Mudasir 075s-Qeamah 076s-Dahar 077s-Mursalat 078s-Naba 079s-Naziaat 080s-Abas 081s-Taqweer 082s-Infitaar 083s-Mutafifeen 084s-Inshiqaq 085s-Burooj 086s-Tariq 087s-Aala 088s-Ghashiah 089s-Fajr 090s-Balad 091s-Shams 092s-Lail 093s-Duha 094s-Alam-Nashrah 095s-Teen 096s-Alaq 097s-Qadar 098s-Bayina 099s-Zilzaal 100s-Aadiyeat 101s-Qariah 102s-Takasur 103s-Aasar 104s-Humaza 105s-feel 106s-Qureish 107s-Maoon 108s-Kusar 109s-Kafiroon 110s-Nasr 111s-Tabat 112s-Akhlaas 113s-Falaq 114s-Naas'.split(' ');
+  var URDU_BASE = 'https://www.nooresunnat.com/Audio/Complete%20Quran/Shuraim-Sudais-Urdu/';
+  function srcUrdu(n) { return URDU_BASE + URDU_AUDIO[n - 1] + '.mp3'; }
+  function audioMode() { return store('amode') === 'ur' ? 'ur' : 'ar'; }
   function srcMp3Quran(n) { return 'https://server11.mp3quran.net/sds/' + String(n).padStart(3, '0') + '.mp3'; }
 
   function resolveFallback(n) {
@@ -540,7 +545,7 @@
     if (!s) return;
     $('#pCover').textContent = s[1];
     $('#pTitle').textContent = 'سورۃ ' + s[0];
-    $('#pArt').textContent = RECITER + ' · ' + ur(s[2]) + ' آیات';
+    $('#pArt').textContent = (audioMode() === 'ur' ? 'السدیس و الشریم · اردو ترجمہ کے ساتھ' : RECITER) + ' · ' + ur(s[2]) + ' آیات';
     $('#miniAr').textContent = s[1];
     $('#miniU').textContent = s[0];
     $('#mini').hidden = false;
@@ -550,7 +555,7 @@
     if (state.tab === 'recite') renderSurahs();
     if (typeof renderTranslation === 'function' && transOpen) renderTranslation();
     if ('mediaSession' in navigator && window.MediaMetadata) {
-      try { navigator.mediaSession.metadata = new MediaMetadata({ title: 'سورۃ ' + s[0], artist: RECITER, album: 'تقویم' }); } catch (e) { /* ignore */ }
+      try { navigator.mediaSession.metadata = new MediaMetadata({ title: 'سورۃ ' + s[0], artist: audioMode() === 'ur' ? 'السدیس و الشریم (اردو ترجمہ)' : RECITER, album: 'تقویم' }); } catch (e) { /* ignore */ }
     }
   }
 
@@ -563,9 +568,10 @@
     setState('لوڈ ہو رہا ہے…');
     $('#pSeek').value = 0; $('#pSeek').style.setProperty('--p', '0%');
     $('#pCur').textContent = fmtTime(0); $('#pDur').textContent = fmtTime(0);
-    player.sources = [srcMp3Quran(n)];
+    player.am = audioMode();
+    player.sources = [player.am === 'ur' ? srcUrdu(n) : srcMp3Quran(n)];
     player.si = 0;
-    player.fallbackTried = false;
+    player.fallbackTried = player.am === 'ur'; /* the fallback server only has the Arabic recitation */
     audio.src = player.sources[0];
     var p = audio.play();
     if (p && p.catch) p.catch(function (err) {
@@ -770,7 +776,7 @@
     paintHl(true);
   }
   function paintHl(force) {
-    if (!transOpen || !arab || store('qsync') === false || !hl.w || hl.n !== player.n) return;
+    if (!transOpen || !arab || store('qsync') === false || !hl.w || hl.n !== player.n || player.am === 'ur') return; /* Urdu-translation audio does not follow the Arabic word timing */
     var d = audio.duration, c = audio.currentTime;
     if (!isFinite(d) || d <= 0) return;
     var pos = c / d * hl.w.tot - hl.w.bis, i = -1, acc = 0;
@@ -783,6 +789,18 @@
     el.classList.add('on');
     if (!audio.paused || force) box.scrollTo({ top: Math.max(0, el.offsetTop - box.offsetTop - 50), behavior: 'smooth' });
   }
+  function paintAm() {
+    var m = audioMode();
+    $$('#pAm button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.am === m)); });
+  }
+  $('#pAm').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-am]'); if (!b || b.dataset.am === audioMode()) return;
+    var was = player.n && !audio.paused, keep = player.n;
+    store('amode', b.dataset.am); paintAm();
+    if (keep) { playSurah(keep); if (!was) audio.pause(); }
+    toast(b.dataset.am === 'ur' ? 'عربی تلاوت کے ساتھ اردو ترجمہ' : 'صرف عربی تلاوت');
+  });
+  paintAm();
   $('#pModes').addEventListener('click', function (e) {
     var m = e.target.closest('[data-md]'); if (!m) return;
     store('qmode', m.dataset.md); transOpen = true;
